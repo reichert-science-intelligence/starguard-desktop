@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+*.db
+.shiny/
+*.egg-info/
+dist/
+build/
