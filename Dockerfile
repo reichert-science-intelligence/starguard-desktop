@@ -17,5 +17,5 @@ COPY . .
 # Expose port
 EXPOSE 8000
 
-# Run Streamlit application
-CMD ["streamlit", "run", "app.py", "--server.port=8000", "--server.address=0.0.0.0"]
+# Run Shiny application
+CMD ["shiny", "run", "app.py", "--host", "0.0.0.0", "--port", "8000"]
