@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+venv_311/
+env/
+.git/
+.gitignore
+.pytest_cache/
+*.md
+!README.md
