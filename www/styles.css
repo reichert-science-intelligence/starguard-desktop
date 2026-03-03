@@ -32,83 +32,6 @@ body {
 }
 
 /* ========== SIDEBAR STYLING ========== */
-/* Sidebar background override */
-.sidebar, .bslib-sidebar-layout > .sidebar {
-  background: linear-gradient(180deg, #4A4468 0%, #3D3159 100%) !important;
-}
-
-/* Sidebar brand styling */
-.sg-sidebar-brand {
-  text-align: center;
-  padding: 0.5rem 0;
-}
-
-.sg-sidebar-brand .sg-star {
-  font-size: 2.2rem;
-  display: inline-block;
-}
-
-.sg-sidebar-brand h2 {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 800;
-  font-size: 1.2rem;
-  color: #fff;
-  margin: 0.3rem 0 0.1rem;
-}
-
-.sg-sidebar-brand .sg-tagline {
-  font-size: 0.75rem;
-  color: #E8D4FF;
-  font-weight: 500;
-}
-
-.sg-nav-group-title {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.4) !important;
-  padding: 0.75rem 1rem 0.3rem;
-}
-
-/* Force white text on all sidebar radio labels */
-.sidebar label,
-.sidebar .form-check-label,
-.sidebar .radio-inline,
-.sidebar .shiny-input-radiogroup label,
-.sidebar .form-check label {
-  color: rgba(255, 255, 255, 0.75) !important;
-  font-family: 'Source Sans 3', sans-serif !important;
-  font-size: 0.88rem !important;
-  font-weight: 500 !important;
-  padding: 0.45rem 1rem !important;
-  border-radius: 6px !important;
-  cursor: pointer !important;
-  transition: all 200ms ease !important;
-  margin-bottom: 1px !important;
-}
-
-.sidebar label:hover,
-.sidebar .form-check-label:hover {
-  color: #fff !important;
-  background: rgba(255, 255, 255, 0.1) !important;
-}
-
-/* Hide radio circles */
-.sidebar input[type="radio"] {
-  display: none !important;
-}
-
-/* Active/checked state — gold left border */
-.sidebar .form-check:has(input:checked) label,
-.sidebar label:has(input:checked),
-.sidebar .form-check-input:checked + .form-check-label {
-  color: #fff !important;
-  background: rgba(139, 122, 184, 0.3) !important;
-  font-weight: 600 !important;
-  box-shadow: inset 3px 0 0 #F59E0B !important;
-}
 
 /* Star emoji pulse animation */
 .sg-star {
@@ -509,3 +432,124 @@ body {
     height: 100dvh;
   }
 }
+
+/* ========== MOBILE-FIRST: VIEWPORT & TOUCH ========== */
+/* Touch-optimized: minimum 44px tap targets (Apple HIG / Material) */
+.sg-metric-card,
+.sg-card,
+.sg-nav-link,
+.action-button,
+.bslib-sidebar-toggle,
+button[class*="btn"],
+a[role="tab"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+.sg-nav-link {
+  padding: 0.75rem 1rem;
+  display: inline-flex;
+  align-items: center;
+}
+.sg-controls .form-group label + *,
+.sg-controls input,
+.sg-controls select {
+  min-height: 44px;
+}
+
+/* Breakpoints: 320 (iPhone SE), 576, 768, 992, 1200, 2560 */
+@media (max-width: 319px) {
+  .sg-header h1 { font-size: 1.25rem; }
+  .sg-metric-value { font-size: 1.5rem; }
+}
+@media (min-width: 320px) and (max-width: 575px) {
+  .sg-main { padding: 0.75rem; }
+  .sg-metrics-row { grid-template-columns: 1fr; gap: 0.75rem; }
+  .sg-header { padding: 1rem; }
+  .sg-footer-metrics { grid-template-columns: 1fr; }
+}
+@media (min-width: 2560px) {
+  .sg-main { max-width: 1400px; margin: 0 auto; }
+}
+
+/* iOS Safari: safe area and fill */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .sg-main { padding-bottom: env(safe-area-inset-bottom); }
+  .sg-footer { padding-bottom: calc(2rem + env(safe-area-inset-bottom)); }
+}
+@supports (height: 100dvh) {
+  html, body { min-height: 100dvh; min-height: -webkit-fill-available; }
+}
+
+/* ════════════════════════════════════════════
+   SIDEBAR NAVIGATION — paste at end of styles.css
+   Replace ALL existing .sg-nav-link, .sg-nav-items,
+   radio button, and action-button rules
+   ════════════════════════════════════════════ */
+
+/* Section titles */
+.sg-nav-group-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.4);
+    padding: 0.75rem 1rem 0.3rem;
+}
+
+/* Nav link items */
+.sg-nav-link {
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.75);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 200ms ease;
+    user-select: none;
+}
+
+.sg-nav-link:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Active nav link */
+.sg-nav-link.sg-nav-active {
+    color: #fff;
+    background: rgba(139, 122, 184, 0.3);
+    box-shadow: inset 3px 0 0 #F59E0B;
+    font-weight: 600;
+}
+
+/* Sidebar brand */
+.sg-sidebar-brand {
+    text-align: center;
+    padding: 0.5rem 0;
+}
+
+.sg-sidebar-brand .sg-star {
+    font-size: 2.2rem;
+    display: inline-block;
+}
+
+.sg-sidebar-brand h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: #fff;
+    margin: 0.3rem 0 0.1rem;
+}
+
+.sg-sidebar-brand .sg-tagline {
+    font-size: 0.75rem;
+    color: #E8D4FF;
+    font-weight: 500;
+}
+
+/* Sidebar background */
+.sidebar, .bslib-sidebar-layout > .sidebar {
+    background: linear-gradient(180deg, #4A4468 0%, #3D3159 100%) !important;
+}
+
