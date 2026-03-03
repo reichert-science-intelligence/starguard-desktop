@@ -1,0 +1,6 @@
+measure_id,numerator,denominator,expected_rate,measurement_year,measure_name,sql_query,validation_notes
+GSD,850,1200,0.7083,2024,Glycemic Status Assessment,Phase 1: Glycemic screening with HbA1c/FPG tests in measurement year,Validated against CMS 2024 benchmarks (synthetic)
+KED,780,1150,0.6783,2024,Kidney Health Evaluation,Phase 1: eGFR or uACR screening for diabetes members,Validated against CMS 2024 benchmarks (synthetic)
+CBP,2100,2800,0.75,2024,Controlling High Blood Pressure,Phase 1: BP control <140/90 for hypertension-only members,Validated against CMS 2024 benchmarks (synthetic)
+BCS,1200,1800,0.6667,2024,Breast Cancer Screening,Phase 1: Mammogram for women 50-74 in 27-month window,Validated against CMS 2024 benchmarks (synthetic)
+COL,1100,1650,0.6667,2024,Colorectal Cancer Screening,Phase 1: Colonoscopy/FIT for members 45-75,Validated against CMS 2024 benchmarks (synthetic)

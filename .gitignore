@@ -1,8 +1,50 @@
-__pycache__/
-*.pyc
+# Environment variables (NEVER commit this)
 .env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# Outputs
+outputs/
+*.pdf
+
+# Database
 *.db
+*.sqlite
+*.sqlite3
+
+# Shiny
 .shiny/
+.shiny_app_*
+rsconnect/
+
+# Compound framework runtime
+compound_framework/session_memory.json
+
+# Build
 *.egg-info/
 dist/
 build/
+
+# System
+.DS_Store
+Thumbs.db
+.venv/
