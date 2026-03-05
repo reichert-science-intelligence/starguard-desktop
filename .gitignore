@@ -1,5 +1,6 @@
-# Environment variables (NEVER commit this)
+# Environment variables and secrets (NEVER commit these)
 .env
+service_account.json
 
 # Python
 __pycache__/

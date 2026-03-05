@@ -95,6 +95,25 @@ MEASURES_LIST = [{"code": k, "name": v, "compliance": 65, "gap": 8, "roi": 1.5} 
 # Import shared UI components (used by remaining pages)
 from shiny.ui import tags
 from htmltools import HTML
+from cloud_status_badge import (
+    cloud_status_css,
+    cloud_status_badge,
+    provenance_footer,
+)
+from hedis_gap_trail import (
+    HedisGapDB,
+    push_hedis_gap,
+    fetch_hedis_gaps,
+    fetch_gap_summary,
+    close_hedis_gap,
+)
+from hedis_gap_ui import hedis_gap_panel
+from star_rating_cache import (
+    StarRatingCacheDB, cache_forecast,
+    fetch_latest_forecast, fetch_forecast_history,
+    fetch_cache_summary, star_label
+)
+from star_rating_cache_ui import star_rating_cache_panel
 from modules.shared_ui import (
     page_header, metric_card, metrics_row, card, chart_container,
     controls, security_badge, tech_badges, qr_landing_card, footer,
@@ -1522,7 +1541,9 @@ SIDEBAR_NAV_HTML = """
 
 <div class="sg-nav-group-title nav-section-header">QUALITY MEASURES</div>
 <div class="sg-nav-link sidebar-link" data-nav="star_rating">⭐ Star Rating Impact</div>
+<div class="sg-nav-link sidebar-link" data-nav="star_cache">⭐ Star Forecast Cache</div>
 <div class="sg-nav-link sidebar-link" data-nav="gap">📋 HEDIS Gap Analysis</div>
+<div class="sg-nav-link sidebar-link" data-nav="hedis_gaps">📊 HEDIS Gaps (Cloud)</div>
 <div class="sg-nav-link sidebar-link" data-nav="compliance">✅ Compliance Reporting</div>
 <div class="sg-nav-link sidebar-link" data-nav="equity">⚖️ Health Equity</div>
 
@@ -1554,12 +1575,34 @@ SIDEBAR_NAV_HTML = """
 <div class="sg-nav-link sidebar-link" data-nav="services">💼 Services & Pricing</div>
 """
 
+# HEDIS Gap cloud persistence — Google Sheets
+hedis_db = HedisGapDB()
+
+# Star Rating Forecast cache — Google Sheets
+star_cache_db = StarRatingCacheDB()
 
 # ═══════════════════════════════════════════════════════════════
 # APP UI
 # ═══════════════════════════════════════════════════════════════
 app_ui = ui.page_fillable(
     ui.head_content(
+        cloud_status_css(),
+        ui.tags.script("""
+            (function(){
+                if (typeof Shiny !== 'undefined') {
+                    Shiny.addCustomMessageHandler('gap_show_loading', function(msg) {
+                        var ta = document.getElementById('gap_claude_rec') || document.querySelector('textarea[id$="gap_claude_rec"]');
+                        if (ta) ta.value = '⏳ Claude is generating...';
+                    });
+                    Shiny.addCustomMessageHandler('gap_set_rec', function(msg) {
+                        var v = (msg && msg.value) || msg || '';
+                        var ta = document.getElementById('gap_claude_rec') || document.querySelector('textarea[id$="gap_claude_rec"]');
+                        if (ta) ta.value = v;
+                        try { Shiny.setInputValue('gap_claude_rec', v); } catch(e) {}
+                    });
+                }
+            })();
+        """),
         ui.tags.meta(name="viewport", content="width=device-width, initial-scale=1, viewport-fit=cover"),
         ui.tags.link(rel="stylesheet", href="styles.css"),
         ui.tags.link(
@@ -1723,8 +1766,10 @@ app_ui = ui.page_fillable(
             bg="#2d2d44",
             open="always",
         ),
-        # ─── Main content: navset_hidden with ALL pages + footer ───
+        # ─── Main content: strip badge + navset_hidden + footer ───
         ui.TagList(
+            cloud_status_badge(app_variant="starguard", layout="strip"),
+            provenance_footer(app_variant="starguard"),
             ui.navset_hidden(
                 ui.nav_panel("home", home_content()),
                 ui.nav_panel("roi_measure", roi_by_measure_content()),
@@ -1734,6 +1779,8 @@ app_ui = ui.page_fillable(
                 ui.nav_panel("hedis_calc", hedis_calc_content()),
                 ui.nav_panel("roi_calc", roi_calc_content()),
                 ui.nav_panel("gap", gap_content()),
+                ui.nav_panel("hedis_gaps", hedis_gap_panel()),
+                ui.nav_panel("star_cache", star_rating_cache_panel()),
                 ui.nav_panel("equity", health_equity_content()),
                 ui.nav_panel("sentiment", sentiment_content()),
                 ui.nav_panel("sdoh", sdoh_content()),
@@ -1777,6 +1824,271 @@ def server(input, output, session):
         target = input.nav_target()
         print(f"SERVER NAV: switching to {target}")
         ui.update_navset("pages", selected=target)
+
+    # ─── HEDIS Gap Refresh (Google Sheets cloud) ───
+    _gap_push_result = reactive.Value(None)
+    _gap_close_result = reactive.Value(None)
+
+    @render.text
+    def hedis_sync_status():
+        s = hedis_db.status()
+        if s["connected"]:
+            return f"☁ Cloud Live — {s['record_count']} gaps — {s['timestamp']}"
+        return f"⚠ Disconnected — {s.get('error', 'No credentials')}"
+
+    @render.ui
+    def hedis_kpi_cards():
+        input.btn_refresh_gaps()
+        input.btn_push_gap()
+        s = fetch_gap_summary(hedis_db)
+        if "error" in s:
+            return ui.div(
+                f"⚠ {s['error']}",
+                style="color:#f87171;font-size:12px;"
+            )
+        return ui.div(
+            ui.div(
+                ui.div(str(s["total"]), class_="kpi-value"),
+                ui.div("Total Gaps", class_="kpi-label"),
+                class_="kpi-card"
+            ),
+            ui.div(
+                ui.div(str(s["open"]), class_="kpi-value"),
+                ui.div("Open", class_="kpi-label"),
+                class_="kpi-card kpi-open"
+            ),
+            ui.div(
+                ui.div(str(s["closed"]), class_="kpi-value"),
+                ui.div("Closed", class_="kpi-label"),
+                class_="kpi-card kpi-closed"
+            ),
+            ui.div(
+                ui.div(str(s["avg_star_impact"]), class_="kpi-value"),
+                ui.div("Avg Star Impact", class_="kpi-label"),
+                class_="kpi-card"
+            ),
+            ui.div(
+                ui.div(f"${s['total_roi']:,.0f}", class_="kpi-value"),
+                ui.div("Est. ROI", class_="kpi-label"),
+                class_="kpi-card kpi-roi"
+            ),
+            class_="kpi-row"
+        )
+
+
+    @reactive.effect
+    @reactive.event(input.btn_generate_gap_rec)
+    def _generate_gap_rec():
+        session.send_custom_message("gap_show_loading", {})
+        try:
+            import anthropic
+            client = anthropic.Anthropic()
+            member_id = input.gap_member_id() or "N/A"
+            member_name = input.gap_member_name() or "N/A"
+            measure_code = input.gap_measure_code() or "N/A"
+            intervention = input.gap_intervention() or "Outreach"
+            star_impact = input.gap_star_impact() or 3
+            prompt = f"""Generate a concise care gap recommendation (2-4 sentences) for:
+Member: {member_id} — {member_name}
+HEDIS Measure: {measure_code}
+Intervention: {intervention}
+Star Impact: {star_impact}
+
+Write a practical, actionable recommendation for closing this gap. Return only the text, no preamble."""
+            resp = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=300,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            rec = resp.content[0].text.strip() if resp.content else ""
+            ui.update_text_area("gap_claude_rec", value=rec)
+        except Exception as e:
+            err_msg = str(e)
+            if "ANTHROPIC" in err_msg.upper() or "api_key" in err_msg.lower():
+                err_msg = "ANTHROPIC_API_KEY not set. Add to .env or Space secrets."
+            ui.update_text_area("gap_claude_rec", value=f"Error: {err_msg}")
+
+    @reactive.effect
+    @reactive.event(input.btn_push_gap)
+    def _push_gap():
+        record = {
+            "member_id": input.gap_member_id() or "",
+            "member_name": input.gap_member_name() or "",
+            "measure_code": input.gap_measure_code() or "",
+            "gap_status": input.gap_status() or "OPEN",
+            "due_date": input.gap_due_date() or "",
+            "provider_name": input.gap_provider() or "",
+            "intervention_type": input.gap_intervention() or "Outreach",
+            "star_impact": input.gap_star_impact() or 3,
+            "roi_estimate": input.gap_roi() or 0,
+            "claude_recommendation": input.gap_claude_rec() or "",
+        }
+        _gap_push_result.set(push_hedis_gap(hedis_db, record))
+
+    @render.ui
+    def gap_push_result():
+        r = _gap_push_result()
+        if r is None:
+            return ui.div()
+        if r.get("success"):
+            return ui.div(
+                f"✅ {r.get('gap_id', '')} pushed — {r.get('measure_name', '')} — {r.get('timestamp', '')}",
+                class_="gap-push-success"
+            )
+        return ui.div(f"❌ {r.get('error', '')}", class_="gap-push-error")
+
+    @render.data_frame
+    def hedis_gap_table():
+        input.btn_refresh_gaps()
+        input.btn_push_gap()
+        input.btn_close_gap()
+        return render.DataGrid(
+            fetch_hedis_gaps(
+                hedis_db,
+                n=15,
+                filter_status=input.gap_filter_status() or "ALL",
+                filter_measure=input.gap_filter_measure() or "ALL"
+            ),
+            width="100%",
+            height="320px"
+        )
+
+    @reactive.effect
+    @reactive.event(input.btn_close_gap)
+    def _close_gap():
+        r = close_hedis_gap(hedis_db, input.gap_id_close() or "")
+        _gap_close_result.set(r)
+
+    @render.ui
+    def gap_close_result():
+        r = _gap_close_result()
+        if r is None:
+            return ui.div()
+        if r.get("success"):
+            return ui.div(
+                f"✅ {r.get('gap_id', '')} → CLOSED",
+                class_="gap-push-success"
+            )
+        return ui.div(f"❌ {r.get('error', '')}", class_="gap-push-error")
+
+    # ─── Star Rating Forecast Cache (Google Sheets) ───
+    _cache_push_val = reactive.Value(None)
+
+    @render.text
+    def star_cache_sync_status():
+        s = star_cache_db.status()
+        if s["connected"]:
+            return f"☁ Cache Live — {s['cache_count']} forecasts — Last run: {s['last_cached_at']} — {s['timestamp']}"
+        return f"⚠ Disconnected — {s.get('error', 'No credentials')}"
+
+    @render.ui
+    def cache_freshness_banner():
+        input.btn_refresh_cache()
+        input.btn_cache_forecast()
+        latest = fetch_latest_forecast(star_cache_db)
+        if latest is None:
+            return ui.div("📭 No forecasts cached yet — run your first forecast below.", class_="cache-banner-empty")
+        ts = latest.get("timestamp", "Unknown")
+        plan = latest.get("plan_name", "")
+        cid = latest.get("contract_id", "")
+        return ui.div(f"✅ FRESH — Cached Forecast: {plan} ({cid}) — Last Updated: {ts}", class_="cache-banner-fresh")
+
+    @render.ui
+    def forecast_hero_card():
+        input.btn_refresh_cache()
+        input.btn_cache_forecast()
+        latest = fetch_latest_forecast(star_cache_db)
+        if latest is None:
+            return ui.div()
+        current = float(latest.get("current_star_rating", 0))
+        projected = float(latest.get("projected_star_rating", 0))
+        delta = float(latest.get("star_delta", 0))
+        conf = latest.get("confidence_level", "MEDIUM").lower()
+        _, proj_color, proj_label = star_label(projected)
+        if delta > 0:
+            delta_html = ui.span(f"+{delta:.1f} ▲", class_="forecast-delta-pos")
+        elif delta < 0:
+            delta_html = ui.span(f"{delta:.1f} ▼", class_="forecast-delta-neg")
+        else:
+            delta_html = ui.span("→ No Change", class_="forecast-delta-neu")
+        return ui.div(
+            ui.div(
+                ui.div("Current Rating", class_="forecast-hero-label"),
+                ui.div(f"{current:.1f}★", class_="forecast-hero-value", style="color:#94a3b8;"),
+                ui.div(star_label(current)[2], class_="forecast-hero-sub"),
+            ),
+            ui.div(
+                ui.div("Projected Rating", class_="forecast-hero-label"),
+                ui.div(f"{projected:.1f}★", class_="forecast-hero-value", style=f"color:{proj_color};"),
+                ui.div(proj_label, class_="forecast-hero-sub"),
+            ),
+            ui.div(
+                ui.div("Star Delta", class_="forecast-hero-label"),
+                delta_html,
+                ui.div(ui.span(latest.get("confidence_level", ""), class_=f"conf-{conf}"),
+                      class_="forecast-hero-sub", style="margin-top:6px;"),
+            ),
+            class_="forecast-hero"
+        )
+
+    @render.ui
+    def star_cache_kpi_row():
+        input.btn_refresh_cache()
+        input.btn_cache_forecast()
+        s = fetch_cache_summary(star_cache_db)
+        if not s or "error" in s:
+            return ui.div()
+        delta_class = "star-kpi-delta-pos" if s.get("avg_delta", 0) >= 0 else "star-kpi-delta-neg"
+        delta_prefix = "+" if s.get("avg_delta", 0) >= 0 else ""
+        return ui.div(
+            ui.div(ui.div(str(s.get("total", 0)), class_="star-kpi-value"), ui.div("Total Cached", class_="star-kpi-label"), class_="star-kpi-card"),
+            ui.div(ui.div(str(s.get("fresh", 0)), class_="star-kpi-value"), ui.div("Fresh", class_="star-kpi-label"), class_="star-kpi-card"),
+            ui.div(ui.div(f"{s.get('avg_projected', 0):.2f}★", class_="star-kpi-value"), ui.div("Avg Projected", class_="star-kpi-label"), class_="star-kpi-card"),
+            ui.div(ui.div(f"{delta_prefix}{s.get('avg_delta', 0):.2f}", class_="star-kpi-value"), ui.div("Avg Star Δ", class_="star-kpi-label"), class_=f"star-kpi-card {delta_class}"),
+            ui.div(ui.div(str(s.get("last_run", "—"))[:10], class_="star-kpi-value", style="font-size:14px;"), ui.div("Last Run", class_="star-kpi-label"), class_="star-kpi-card"),
+            class_="star-kpi-row"
+        )
+
+    @reactive.effect
+    @reactive.event(input.btn_cache_forecast)
+    def _cache_forecast():
+        forecast = {
+            "contract_id": input.fcst_contract_id() or "",
+            "plan_name": input.fcst_plan_name() or "",
+            "measurement_year": input.fcst_year() or 2026,
+            "current_star_rating": input.fcst_current() or 3.5,
+            "projected_star_rating": input.fcst_projected() or 4.0,
+            "top_gap_measure": input.fcst_top_gap() or "",
+            "gaps_open": input.fcst_gaps_open() or 0,
+            "gaps_closed": input.fcst_gaps_closed() or 0,
+            "hedis_completion_rate": input.fcst_hedis_rate() or 0.75,
+            "hcc_risk_score": input.fcst_hcc() or 1.0,
+            "cahps_score": input.fcst_cahps() or 80.0,
+            "roi_projection": input.fcst_roi() or 0,
+            "confidence_level": input.fcst_confidence() or "MEDIUM",
+            "claude_narrative": input.fcst_narrative() or "",
+            "cached_by": "StarGuard AI — Robert Reichert"
+        }
+        _cache_push_val.set(cache_forecast(star_cache_db, forecast))
+
+    @render.ui
+    def cache_push_result():
+        r = _cache_push_val()
+        if r is None:
+            return ui.div()
+        if r.get("success"):
+            delta_str = f"+{r['star_delta']}" if r['star_delta'] >= 0 else str(r['star_delta'])
+            return ui.div(f"✅ {r.get('forecast_id', '')} cached — Star Δ {delta_str} — {r.get('timestamp', '')}", class_="cache-push-success")
+        return ui.div(f"❌ {r.get('error', '')}", class_="cache-push-error")
+
+    @render.data_frame
+    def forecast_history_table():
+        input.btn_load_history()
+        input.btn_cache_forecast()
+        return render.DataGrid(
+            fetch_forecast_history(star_cache_db, contract_id=input.fcst_filter_contract() or "", n=12),
+            width="100%", height="300px"
+        )
 
     # ─── Home page chart ───
     @render.ui
