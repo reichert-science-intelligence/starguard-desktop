@@ -10,7 +10,7 @@ import os
 import json
 import gspread
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from google.oauth2.service_account import Credentials
 
 SCOPES = [
@@ -134,7 +134,7 @@ class StarRatingCacheDB:
             "error":          self.last_error,
             "cache_count":    self.cache_count,
             "last_cached_at": self.last_cached_at or "No forecasts cached yet",
-            "timestamp":      datetime.now().strftime("%H:%M:%S EST")
+            "timestamp": datetime.now(timezone(timedelta(hours=-5))).strftime("%I:%M:%S %p EST")
         }
 
 
@@ -161,7 +161,7 @@ def cache_forecast(db: StarRatingCacheDB, forecast: dict) -> dict:
         # Mark all previous FRESH rows as STALE for this contract
         _mark_prior_stale(db, forecast.get("contract_id", ""))
 
-        now = datetime.now()
+        now = datetime.now(timezone(timedelta(hours=-5)))
         forecast_id = f"FCST-{now.strftime('%Y%m%d-%H%M%S')}"
         current  = float(forecast.get("current_star_rating", 0))
         projected = float(forecast.get("projected_star_rating", 0))
@@ -196,7 +196,7 @@ def cache_forecast(db: StarRatingCacheDB, forecast: dict) -> dict:
         return {
             "success":     True,
             "forecast_id": forecast_id,
-            "timestamp":   now.strftime("%H:%M:%S EST"),
+            "timestamp": now.strftime("%I:%M:%S %p EST"),
             "star_delta":  round(projected - current, 2),
         }
 

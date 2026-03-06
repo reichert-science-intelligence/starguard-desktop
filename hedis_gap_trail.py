@@ -10,7 +10,7 @@ import os
 import json
 import gspread
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from google.oauth2.service_account import Credentials
 
 SCOPES = [
@@ -115,7 +115,7 @@ class HedisGapDB:
             "connected": self.connected,
             "error": self.last_error,
             "record_count": self.record_count,
-            "timestamp": datetime.now().strftime("%H:%M:%S EST")
+            "timestamp": datetime.now(timezone(timedelta(hours=-5))).strftime("%I:%M:%S %p EST")
         }
 
 
@@ -136,7 +136,7 @@ def push_hedis_gap(db: HedisGapDB, record: dict) -> dict:
         return {"success": False, "error": f"Cloud disconnected: {db.last_error}"}
 
     try:
-        now = datetime.now()
+        now = datetime.now(timezone(timedelta(hours=-5)))
         gap_id = f"GAP-{now.strftime('%Y%m%d-%H%M%S')}"
         measure_code = record.get("measure_code", "")
         measure_name, care_domain = HEDIS_MEASURES.get(
@@ -167,7 +167,7 @@ def push_hedis_gap(db: HedisGapDB, record: dict) -> dict:
         return {
             "success": True,
             "gap_id": gap_id,
-            "timestamp": now.strftime("%H:%M:%S EST"),
+            "timestamp": now.strftime("%I:%M:%S %p EST"),
             "measure_name": measure_name
         }
 
