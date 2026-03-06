@@ -97,7 +97,7 @@ from shiny.ui import tags
 from htmltools import HTML
 from cloud_status_badge import (
     cloud_status_css,
-    cloud_status_badge,
+    starguard_desktop_badge,
     provenance_footer,
 )
 from hedis_gap_trail import (
@@ -1768,7 +1768,7 @@ app_ui = ui.page_fillable(
         ),
         # ─── Main content: strip badge + navset_hidden + footer ───
         ui.TagList(
-            cloud_status_badge(app_variant="starguard", layout="strip"),
+            starguard_desktop_badge(mode="strip"),
             provenance_footer(app_variant="starguard"),
             ui.navset_hidden(
                 ui.nav_panel("home", home_content()),
