@@ -1,8 +1,8 @@
 # hedis_gap_trail.py
 # ─────────────────────────────────────────────────────────────
-# HEDIS Gap Refresh — Google Sheets Cloud Persistence
+# HEDIS Gap Refresh — Google Sheets + Supabase Parallel Write
 # StarGuard Desktop + Mobile | reichert-science-intelligence
-# Mirrors audit_trail.py pattern for HEDIS analytics layer
+# Phase 1: Writes to both backends when SUPABASE_URL/KEY set
 # Brand: Purple #4A3E8F | Gold #D4AF37 | Green #10b981
 # ─────────────────────────────────────────────────────────────
 
@@ -12,6 +12,12 @@ import gspread
 import pandas as pd
 from datetime import datetime, timezone, timedelta
 from google.oauth2.service_account import Credentials
+
+try:
+    from supabase import create_client
+    _SUPABASE_AVAILABLE = True
+except ImportError:
+    _SUPABASE_AVAILABLE = False
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -164,6 +170,9 @@ def push_hedis_gap(db: HedisGapDB, record: dict) -> dict:
         db.sheet.append_row(row)
         db.record_count += 1
 
+        # Phase 1: Supabase parallel write (fire-and-forget)
+        _push_gap_to_supabase(row)
+
         return {
             "success": True,
             "gap_id": gap_id,
@@ -173,6 +182,36 @@ def push_hedis_gap(db: HedisGapDB, record: dict) -> dict:
 
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+def _push_gap_to_supabase(row: list) -> None:
+    """Parallel write to Supabase if configured. Silent on failure."""
+    if not _SUPABASE_AVAILABLE:
+        return
+    url, key = os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_KEY")
+    if not url or not key:
+        return
+    try:
+        client = create_client(url, key)
+        client.table("hedis_gap_trail").insert({
+            "gap_id": row[0],
+            "timestamp": row[1],
+            "member_id": row[2],
+            "member_name": row[3],
+            "measure_code": row[4],
+            "measure_name": row[5],
+            "care_domain": row[6],
+            "gap_status": row[7],
+            "due_date": row[8],
+            "provider_name": row[9],
+            "intervention_type": row[10],
+            "star_impact": row[11],
+            "roi_estimate": row[12],
+            "claude_recommendation": row[13],
+            "last_updated": row[14],
+        }).execute()
+    except Exception:
+        pass  # non-blocking; Sheets is source of truth
 
 
 def fetch_hedis_gaps(
