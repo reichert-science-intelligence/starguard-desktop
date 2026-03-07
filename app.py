@@ -106,8 +106,14 @@ from hedis_gap_trail import (
     fetch_hedis_gaps,
     fetch_gap_summary,
     close_hedis_gap,
+    get_gap_suppressions,
+    add_gap_suppression,
+    remove_gap_suppression,
 )
 from hedis_gap_ui import hedis_gap_panel
+from hitl_admin_view import hitl_admin_panel
+from suppression_banner import suppression_banner
+from intervention_optimizer import intervention_optimizer_panel, compute_priority_scores
 from star_rating_cache import (
     StarRatingCacheDB, cache_forecast,
     fetch_latest_forecast, fetch_forecast_history,
@@ -1779,7 +1785,11 @@ app_ui = ui.page_fillable(
                 ui.nav_panel("hedis_calc", hedis_calc_content()),
                 ui.nav_panel("roi_calc", roi_calc_content()),
                 ui.nav_panel("gap", gap_content()),
-                ui.nav_panel("hedis_gaps", hedis_gap_panel()),
+                ui.nav_panel("hedis_gaps", ui.div(
+                    suppression_banner(app_type="gap"),
+                    hedis_gap_panel(),
+                    style="padding: 20px;"
+                )),
                 ui.nav_panel("star_cache", star_rating_cache_panel()),
                 ui.nav_panel("equity", health_equity_content()),
                 ui.nav_panel("sentiment", sentiment_content()),
@@ -1800,6 +1810,8 @@ app_ui = ui.page_fillable(
                 ui.nav_panel("data_quality", data_quality_content()),
                 ui.nav_panel("reporting", reporting_content()),
                 ui.nav_panel("audit", audit_content()),
+                ui.nav_panel("Admin View", ui.div(hitl_admin_panel(app_type="gap"), style="padding: 20px;")),
+                ui.nav_panel("Intervention Optimizer", ui.div(intervention_optimizer_panel(hedis_db), style="padding: 20px;")),
                 ui.nav_panel("settings", settings_content()),
                 ui.nav_panel("about", about_content()),
                 ui.nav_panel("services", services_content()),
@@ -1828,6 +1840,8 @@ def server(input, output, session):
     # ─── HEDIS Gap Refresh (Google Sheets cloud) ───
     _gap_push_result = reactive.Value(None)
     _gap_close_result = reactive.Value(None)
+    _hitl_gap_add_result = reactive.Value(None)
+    _hitl_gap_remove_result = reactive.Value(None)
 
     @render.text
     def hedis_sync_status():
@@ -1970,6 +1984,85 @@ Write a practical, actionable recommendation for closing this gap. Return only t
                 class_="gap-push-success"
             )
         return ui.div(f"❌ {r.get('error', '')}", class_="gap-push-error")
+
+    # ─── Phase 2: HITL Admin — Gap Suppressions ───
+    _hitl_gap_add_result = reactive.Value(None)
+    _hitl_gap_remove_result = reactive.Value(None)
+
+    @reactive.Effect
+    @reactive.event(input.btn_add_gap_suppression)
+    def _hitl_add_gap_suppression():
+        gid = (input.hitl_gap_id() or "").strip()
+        reason = (input.hitl_gap_reason() or "Manual").strip()
+        if not gid:
+            return
+        r = add_gap_suppression(gid, reason)
+        _hitl_gap_add_result.set(r)
+
+    @render.ui
+    def hitl_gap_add_result():
+        r = _hitl_gap_add_result()
+        if r is None:
+            return ui.div()
+        if r.get("success"):
+            return ui.div("Added suppression", class_="gap-push-success")
+        return ui.div(f"Error: {r.get('error', '')}", class_="gap-push-error")
+
+    @reactive.Effect
+    @reactive.event(input.btn_remove_gap_suppression)
+    def _hitl_remove_gap_suppression():
+        gid = (input.hitl_gap_remove_id() or "").strip()
+        if not gid:
+            return
+        r = remove_gap_suppression(gid)
+        _hitl_gap_remove_result.set(r)
+
+    @render.ui
+    def hitl_gap_remove_result():
+        r = _hitl_gap_remove_result()
+        if r is None:
+            return ui.div()
+        if r.get("success"):
+            return ui.div("Removed suppression", class_="gap-push-success")
+        return ui.div(f"Error: {r.get('error', '')}", class_="gap-push-error")
+
+    @render.ui
+    def hitl_gap_rules_list():
+        input.btn_refresh_hitl_gap()
+        input.btn_add_gap_suppression()
+        input.btn_remove_gap_suppression()
+        _hitl_gap_remove_result()
+        rules = get_gap_suppressions()
+        if not rules:
+            return ui.p("No suppression rules.", class_="text-muted")
+        return ui.div(
+            *[
+                ui.div(
+                    ui.strong(r.get("gap_id", "")),
+                    " - ",
+                    r.get("reason", ""),
+                    class_="hitl-rule-row"
+                )
+                for r in rules
+            ]
+        )
+
+    # ─── Phase 2: Intervention Optimizer ───
+    @render.ui
+    def intervention_optimizer_table():
+        df = fetch_hedis_gaps(hedis_db, n=20, filter_status="OPEN", filter_measure="ALL")
+        if df.empty:
+            return ui.p("No open gaps. Push gaps to cloud first.", class_="text-muted")
+        from intervention_optimizer import compute_priority_scores
+        df = compute_priority_scores(df)
+        return render.DataGrid(df.head(15), width="100%", height="280px")
+
+    @render.text
+    def intervention_optimizer_status():
+        s = hedis_db.status()
+        if s.get("connected"):
+            return f"Cloud connected — {s.get('record_count', 0)} records"
+        return f"Disconnected — {s.get('error', '')}"
 
     # ─── Star Rating Forecast Cache (Google Sheets) ───
     _cache_push_val = reactive.Value(None)
