@@ -2,7 +2,7 @@
 
 ## Purpose
 
-StarGuard Desktop is a production-grade Medicare Advantage Intelligence Platform for health plan analysts and Star Ratings program managers. It delivers 18+ analytical pages: HEDIS gap analysis, HCC risk stratification, Star Rating forecasting, ROI analytics, HITL Admin View, and AI-powered executive insights. Phase 2 adds gap suppression, suppression banner, HITL Admin View, and Intervention Optimizer.
+StarGuard Desktop is a production-grade Medicare Advantage Intelligence Platform for health plan analysts and Star Ratings program managers. It delivers ~30 analytical pages: HEDIS gap analysis, HCC risk stratification, Star Rating forecasting, ROI analytics, ML gap-closure predictions (93% accuracy), HITL Admin View, and AI-powered executive insights. Phase 2 adds gap suppression, suppression banner, HITL Admin View, and Intervention Optimizer.
 
 ---
 
@@ -13,16 +13,17 @@ StarGuard Desktop is a production-grade Medicare Advantage Intelligence Platform
 │                      StarGuard Desktop (Shiny App)                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  app.py (main)                                                               │
-│    ├── hedis_gap_trail.py ──────► Google Sheets + Supabase                  │
-│    │   └── .gap_suppressions.json (Phase 2)                                 │
-│    ├── hedis_gap_ui.py (if present)                                          │
+│    ├── hedis_gap_trail.py ──────► Google Sheets + Supabase                   │
+│    │   └── .gap_suppressions.json (Phase 2)                                  │
+│    ├── hedis_gap_ui.py                                                       │
 │    ├── cloud_status_badge.py                                                 │
 │    ├── suppression_banner.py (Phase 2)                                       │
 │    ├── hitl_admin_view.py (Phase 2)                                           │
-│    ├── intervention_optimizer.py (Phase 2)                                    │
-│    ├── compound_framework/ (AI engine, financial impact)                      │
-│    ├── utils/ (formatters, intervention_analysis, roi_calculator)            │
-│    └── www/ (static assets, QR codes)                                         │
+│    ├── intervention_optimizer.py (Phase 2)                                  │
+│    ├── compound_framework/ (AI engine, financial impact)                     │
+│    ├── modules/ (agentic_outreach, channel_optimizer, sdoh_mapper, etc.)      │
+│    ├── utils/ (formatters, intervention_analysis, roi_calculator)           │
+│    └── data/ (db, create_sentiment_corpus, create_sdoh_mapping)              │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -32,15 +33,17 @@ StarGuard Desktop is a production-grade Medicare Advantage Intelligence Platform
 
 | Module | Role |
 |--------|------|
-| `app.py` | Main Shiny UI + server, 18+ pages |
+| `app.py` | Main Shiny UI + server, ~30 nav panels |
 | `hedis_gap_trail.py` | HEDIS gap CRUD, Google Sheets, Supabase, Phase 2 gap suppression |
-| `hedis_gap_ui.py` | HEDIS gap panel UI (if present) |
+| `hedis_gap_ui.py` | HEDIS gap panel UI |
 | `cloud_status_badge.py` | Cloud services badge |
 | `suppression_banner.py` | Phase 2 gap suppression banner |
 | `hitl_admin_view.py` | Phase 2 HITL Admin View (gap suppressions) |
 | `intervention_optimizer.py` | Phase 2 intervention optimizer |
 | `compound_framework/` | AI engine, financial impact, gap closure |
-| `utils/` | Formatters, intervention analysis, ROI calculator |
+| `modules/` | Agentic outreach, channel optimizer, SDoH mapper, sentiment, etc. |
+| `utils/` | Formatters, intervention analysis, ROI calculator, charts |
+| `data/` | Database, sentiment corpus, SDoH mapping |
 
 ---
 
@@ -54,8 +57,18 @@ User → Shiny UI → Server Handlers
          ├──► get_gap_suppressions() → .gap_suppressions.json
          ├──► add/remove_gap_suppression() → JSON CRUD
          ├──► apply_gap_suppression_filter() → filter DataFrame
-         └──► compound_framework, utils → AI, ROI, interventions
+         └──► compound_framework, modules, utils → AI, ROI, interventions
 ```
+
+---
+
+## Supabase Schema
+
+| Table | Purpose |
+|------|---------|
+| `hedis_gap_trail` | Parallel write from hedis_gap_trail.py; mirrors Google Sheets HEDIS gap records |
+
+Primary persistence: Google Sheets. Supabase used for parallel write when `SUPABASE_URL` and `SUPABASE_ANON_KEY` are set. Shared schema with StarGuard Mobile.
 
 ---
 
@@ -74,9 +87,9 @@ User → Shiny UI → Server Handlers
 ```
 app.py
   ├── shiny, shinywidgets, htmltools
-  ├── hedis_gap_trail, cloud_status_badge
+  ├── hedis_gap_trail, hedis_gap_ui, cloud_status_badge
   ├── suppression_banner, hitl_admin_view, intervention_optimizer
-  ├── compound_framework, utils
+  ├── compound_framework, modules, utils, data
   ├── pandas, numpy, plotly
   └── gspread, supabase, google-auth, anthropic
 ```
@@ -95,12 +108,22 @@ app.py
 
 ---
 
+## Supabase Schema
+
+| Table | Purpose |
+|-------|---------|
+| `hedis_gap_trail` | Parallel write from hedis_gap_trail.py (HEDIS gap records) |
+
+Google Sheets is source of truth; Supabase receives fire-and-forget parallel writes when `SUPABASE_URL` and `SUPABASE_ANON_KEY` are set. Same schema as StarGuard Mobile.
+
+---
+
 ## Phase 2 Hardening Checklist
 
 - [x] pyproject.toml (build, ruff, mypy, pytest)
 - [x] Type hints (hedis_gap_trail, cloud_status_badge, suppression_banner, hitl_admin_view)
-- [x] Unit tests (tests/test_starguard_desktop.py)
-- [x] CI workflow (.github/workflows/ci.yml)
+- [x] Unit tests (tests/test_starguard_desktop.py) — 17 tests — 17 tests
+- [x] CI workflow (.github/workflows/ci.yml) — strict mode
 - [x] ARCHITECTURE.md
 
 ---
