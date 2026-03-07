@@ -45,6 +45,7 @@ known-first-party = ["app", "hedis_gap_trail", "cloud_status_badge", "hitl_admin
 [tool.mypy]
 python_version = "3.11"
 strict = true
+explicit_package_bases = true
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true

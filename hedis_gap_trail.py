@@ -12,7 +12,7 @@ import json
 import gspread
 import pandas as pd
 from datetime import datetime, timezone, timedelta
-from typing import Optional
+from typing import Any, Optional
 from google.oauth2.service_account import Credentials
 
 try:
@@ -72,23 +72,23 @@ class HedisGapDB:
     Sheet name:  HEDIS_SHEET_ID env var or 'StarGuard_HEDIS_Gap_Tracker'
     """
 
-    def __init__(self):
-        self.client = None
-        self.sheet = None
-        self.connected = False
-        self.last_error = None
-        self.record_count = 0
+    def __init__(self) -> None:
+        self.client: Any = None
+        self.sheet: Any = None
+        self.connected: bool = False
+        self.last_error: Optional[str] = None
+        self.record_count: int = 0
         self._connect()
 
-    def _connect(self):
+    def _connect(self) -> None:
         try:
             creds_json = os.environ.get("GSHEETS_CREDS_JSON")
             if creds_json:
-                creds = Credentials.from_service_account_info(
+                creds = Credentials.from_service_account_info(  # type: ignore[no-untyped-call]
                     json.loads(creds_json), scopes=SCOPES
                 )
             elif os.path.exists("service_account.json"):
-                creds = Credentials.from_service_account_file(
+                creds = Credentials.from_service_account_file(  # type: ignore[no-untyped-call]
                     "service_account.json", scopes=SCOPES
                 )
             else:
@@ -114,11 +114,12 @@ class HedisGapDB:
             self.connected = False
             self.last_error = str(e)
 
-    def _ensure_headers(self):
+    def _ensure_headers(self) -> None:
+        assert self.sheet is not None
         if not self.sheet.row_values(1):
             self.sheet.insert_row(HEDIS_COLUMNS, index=1)
 
-    def status(self) -> dict:
+    def status(self) -> dict[str, Any]:
         return {
             "connected": self.connected,
             "error": self.last_error,
@@ -131,7 +132,7 @@ class HedisGapDB:
 # HEDIS GAP OPERATIONS
 # ─────────────────────────────────────────────────────────────
 
-def push_hedis_gap(db: HedisGapDB, record: dict) -> dict:
+def push_hedis_gap(db: HedisGapDB, record: dict[str, Any]) -> dict[str, Any]:
     """
     Push a single HEDIS gap record to Google Sheets.
 
@@ -142,6 +143,7 @@ def push_hedis_gap(db: HedisGapDB, record: dict) -> dict:
     """
     if not db.connected:
         return {"success": False, "error": f"Cloud disconnected: {db.last_error}"}
+    assert db.sheet is not None
 
     try:
         now = datetime.now(timezone(timedelta(hours=-5)))
@@ -186,7 +188,7 @@ def push_hedis_gap(db: HedisGapDB, record: dict) -> dict:
         return {"success": False, "error": str(e)}
 
 
-def _push_gap_to_supabase(row: list) -> None:
+def _push_gap_to_supabase(row: list[Any]) -> None:
     """Parallel write to Supabase if configured. Silent on failure."""
     if not _SUPABASE_AVAILABLE:
         return
@@ -224,10 +226,10 @@ _SUPPRESSION_FILE = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     os.environ.get("GAP_SUPPRESSION_FILE", ".gap_suppressions.json")
 )
-_GAP_SUPPRESSIONS_CACHE: Optional[list] = None
+_GAP_SUPPRESSIONS_CACHE: Optional[list[dict[str, Any]]] = None
 
 
-def _load_gap_suppressions() -> list:
+def _load_gap_suppressions() -> list[dict[str, Any]]:
     """Load suppression rules from JSON file."""
     global _GAP_SUPPRESSIONS_CACHE
     if os.path.exists(_SUPPRESSION_FILE):
@@ -241,7 +243,7 @@ def _load_gap_suppressions() -> list:
     return _GAP_SUPPRESSIONS_CACHE
 
 
-def _save_gap_suppressions(rules: list) -> None:
+def _save_gap_suppressions(rules: list[dict[str, Any]]) -> None:
     """Persist suppression rules to JSON."""
     global _GAP_SUPPRESSIONS_CACHE
     _GAP_SUPPRESSIONS_CACHE = rules
@@ -252,12 +254,12 @@ def _save_gap_suppressions(rules: list) -> None:
         pass
 
 
-def get_gap_suppressions() -> list:
+def get_gap_suppressions() -> list[dict[str, Any]]:
     """Return all active gap suppression rules."""
     return list(_load_gap_suppressions())
 
 
-def add_gap_suppression(gap_id: str, reason: str = "") -> dict:
+def add_gap_suppression(gap_id: str, reason: str = "") -> dict[str, Any]:
     """Add a suppression rule for a gap. Returns {success, error}."""
     rules = _load_gap_suppressions()
     if any(r.get("gap_id") == gap_id for r in rules):
@@ -271,7 +273,7 @@ def add_gap_suppression(gap_id: str, reason: str = "") -> dict:
     return {"success": True, "gap_id": gap_id}
 
 
-def remove_gap_suppression(gap_id: str) -> dict:
+def remove_gap_suppression(gap_id: str) -> dict[str, Any]:
     """Remove suppression for a gap. Returns {success, error}."""
     rules = [r for r in _load_gap_suppressions() if r.get("gap_id") != gap_id]
     _save_gap_suppressions(rules)
@@ -301,6 +303,7 @@ def fetch_hedis_gaps(
     """
     if not db.connected:
         return pd.DataFrame(columns=HEDIS_COLUMNS)
+    assert db.sheet is not None
 
     try:
         records = db.sheet.get_all_records()
@@ -330,7 +333,7 @@ def fetch_hedis_gaps(
         return pd.DataFrame({"Error": [str(e)]})
 
 
-def fetch_gap_summary(db: HedisGapDB) -> dict:
+def fetch_gap_summary(db: HedisGapDB) -> dict[str, Any]:
     """
     Aggregate summary stats for the dashboard KPI row.
     Returns: { total, open, closed, avg_star_impact, total_roi }
@@ -338,6 +341,7 @@ def fetch_gap_summary(db: HedisGapDB) -> dict:
     if not db.connected:
         return {"total": 0, "open": 0, "closed": 0,
                 "avg_star_impact": 0.0, "total_roi": 0.0}
+    assert db.sheet is not None
     try:
         records = db.sheet.get_all_records()
         df = pd.DataFrame(records)
@@ -360,10 +364,11 @@ def fetch_gap_summary(db: HedisGapDB) -> dict:
         return {"error": str(e)}
 
 
-def close_hedis_gap(db: HedisGapDB, gap_id: str) -> dict:
+def close_hedis_gap(db: HedisGapDB, gap_id: str) -> dict[str, Any]:
     """Mark a gap as CLOSED by gap_id."""
     if not db.connected:
         return {"success": False, "error": "Cloud disconnected"}
+    assert db.sheet is not None
     try:
         cell = db.sheet.find(gap_id)
         if not cell:
