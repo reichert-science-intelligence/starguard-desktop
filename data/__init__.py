@@ -5,4 +5,4 @@ Database connection and query functions
 
 from .db import query
 
-__all__ = ['query']
+__all__ = ["query"]

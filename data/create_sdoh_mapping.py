@@ -4,9 +4,11 @@ Uses AHRQ SDoH Database structure.
 Run: python -m data.create_sdoh_mapping
 Output: data/sdoh_mapping.csv
 """
-import pandas as pd
+
 import random
 from pathlib import Path
+
+import pandas as pd
 
 # Base SDoH data - Pittsburgh + examples per AHRQ structure
 SDOH_BASE = {
@@ -32,14 +34,24 @@ def expand_sdoh_data(base_df: pd.DataFrame, n_zips: int = 500) -> pd.DataFrame:
             if new_zip not in zips_seen:
                 zips_seen.add(new_zip)
                 break
-        expanded.append({
-            "zip_code": new_zip,
-            "food_desert_score": max(0, min(10, base_row["food_desert_score"] + random.uniform(-1, 1))),
-            "transit_access_score": max(0, min(10, base_row["transit_access_score"] + random.uniform(-1, 1))),
-            "poverty_rate": max(0, min(1, base_row["poverty_rate"] + random.uniform(-0.05, 0.05))),
-            "uninsured_rate": max(0, min(1, base_row["uninsured_rate"] + random.uniform(-0.02, 0.02))),
-            "primary_barrier": base_row["primary_barrier"],
-        })
+        expanded.append(
+            {
+                "zip_code": new_zip,
+                "food_desert_score": max(
+                    0, min(10, base_row["food_desert_score"] + random.uniform(-1, 1))
+                ),
+                "transit_access_score": max(
+                    0, min(10, base_row["transit_access_score"] + random.uniform(-1, 1))
+                ),
+                "poverty_rate": max(
+                    0, min(1, base_row["poverty_rate"] + random.uniform(-0.05, 0.05))
+                ),
+                "uninsured_rate": max(
+                    0, min(1, base_row["uninsured_rate"] + random.uniform(-0.02, 0.02))
+                ),
+                "primary_barrier": base_row["primary_barrier"],
+            }
+        )
 
     return pd.DataFrame(expanded)
 

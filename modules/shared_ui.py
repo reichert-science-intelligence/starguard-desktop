@@ -3,7 +3,7 @@ StarGuard AI - Shared UI Components
 Reusable UI components for the Shiny application
 """
 
-from htmltools import tags, HTML, Tag
+from htmltools import Tag, tags
 from shiny import ui
 
 
@@ -50,14 +50,14 @@ def create_header() -> Tag:
         tags.div(
             tags.h2(
                 tags.span("⭐", class_="star-icon"),
-                "StarGuard AI | Medicare Advantage Intelligence Platform"
+                "StarGuard AI | Medicare Advantage Intelligence Platform",
             ),
             tags.p(
                 "Compound AI for Star Ratings, Risk Adjustment & Member Retention",
-                class_="subtitle"
+                class_="subtitle",
             ),
-            class_="app-header"
-        )
+            class_="app-header",
+        ),
     )
 
 
@@ -75,43 +75,43 @@ def create_footer() -> Tag:
                 padding-top: 20px;
                 border-top: 2px solid #e0e0e0;
             }
-            
+
             .footer-contact-info {
                 padding: 10px 0;
             }
-            
+
             .footer-contact-info p {
                 margin: 5px 0;
                 font-size: 0.9em;
                 color: #555;
             }
-            
+
             .footer-contact-info strong {
                 color: #2c3e50;
             }
-            
+
             .footer-contact-info a {
                 color: #667eea;
                 text-decoration: none;
                 font-weight: 500;
             }
-            
+
             .footer-contact-info a:hover {
                 text-decoration: underline;
             }
-            
+
             .footer-qr-section {
                 text-align: center;
                 padding: 10px;
             }
-            
+
             .footer-qr-section p {
                 font-size: 0.85em;
                 color: #555;
                 font-weight: 600;
                 margin-bottom: 8px;
             }
-            
+
             .footer-qr-section img {
                 max-width: 120px;
                 height: auto;
@@ -123,12 +123,12 @@ def create_footer() -> Tag:
                 background: white;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             }
-            
+
             .footer-mobile-badge {
                 text-align: center;
                 margin-top: 10px;
             }
-            
+
             .footer-mobile-badge span {
                 display: inline-block;
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -139,28 +139,28 @@ def create_footer() -> Tag:
                 font-weight: 600;
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
             }
-            
+
             .footer-demo-info {
                 background: #f8f9fa;
                 padding: 20px;
                 border-radius: 8px;
                 margin-top: 20px;
             }
-            
+
             .footer-demo-info h6 {
                 color: #2c3e50;
                 margin-top: 0;
                 margin-bottom: 10px;
                 font-weight: 600;
             }
-            
+
             .footer-demo-info ul {
                 color: #7f8c8d;
                 font-size: 0.85em;
                 line-height: 1.6;
                 margin-bottom: 10px;
             }
-            
+
             .footer-copyright {
                 text-align: center;
                 color: #95a5a6;
@@ -170,16 +170,16 @@ def create_footer() -> Tag:
                 border-top: 1px solid #e0e0e0;
                 font-style: italic;
             }
-            
+
             @media print {
                 .footer-mobile-badge {
                     display: none;
                 }
-                
+
                 .footer-demo-info {
                     display: none;
                 }
-                
+
                 .footer-qr-section img {
                     max-width: 1.5in !important;
                     border: 2px solid #000 !important;
@@ -188,95 +188,99 @@ def create_footer() -> Tag:
         """),
         ui.div(
             ui.row(
-                ui.column(6,
+                ui.column(
+                    6,
                     ui.div(
                         ui.tags.p(
-                            ui.tags.strong("Medicare Advantage Intelligence Platform | StarGuard AI")
+                            ui.tags.strong(
+                                "Medicare Advantage Intelligence Platform | StarGuard AI"
+                            )
                         ),
                         ui.tags.p(
                             "📧 ",
                             ui.tags.a(
                                 "reichert.starguardai@gmail.com",
                                 href="mailto:reichert.starguardai@gmail.com",
-                                target="_blank"
-                            )
+                                target="_blank",
+                            ),
                         ),
                         ui.tags.p(
                             "💼 ",
                             ui.tags.a(
                                 "linkedin.com/in/robertreichert-healthcareai",
                                 href="https://linkedin.com/in/robertreichert-healthcareai",
-                                target="_blank"
-                            )
+                                target="_blank",
+                            ),
                         ),
                         ui.tags.p(
                             "🔗 ",
                             ui.tags.a(
                                 "Live Demo: tinyurl.com/bdevpdz5",
                                 href="https://tinyurl.com/bdevpdz5",
-                                target="_blank"
-                            )
+                                target="_blank",
+                            ),
                         ),
-                        class_="footer-contact-info"
-                    )
+                        class_="footer-contact-info",
+                    ),
                 ),
-                ui.column(6,
+                ui.column(
+                    6,
                     ui.div(
                         ui.tags.p("Scan to Try Demo:"),
-                        ui.tags.img(
-                            src=_QR_BASE64,
-                            alt="StarGuard AI Demo QR Code"
-                        ),
-                        ui.div(
-                            ui.tags.span("📱 Mobile Ready"),
-                            class_="footer-mobile-badge"
-                        ),
-                        class_="footer-qr-section"
-                    )
-                )
+                        ui.tags.img(src=_QR_BASE64, alt="StarGuard AI Demo QR Code"),
+                        ui.div(ui.tags.span("📱 Mobile Ready"), class_="footer-mobile-badge"),
+                        class_="footer-qr-section",
+                    ),
+                ),
             ),
             ui.tags.hr(style="margin-top: 25px; border-color: #e0e0e0;"),
             ui.div(
                 ui.tags.h6(
                     "About This Demonstration",
-                    style="color: #2c3e50; margin-top: 20px; margin-bottom: 10px; font-weight: 600;"
+                    style="color: #2c3e50; margin-top: 20px; margin-bottom: 10px; font-weight: 600;",
                 ),
                 ui.tags.p(
                     ui.tags.strong("Demonstration Data Sources:"),
-                    style="margin: 10px 0 5px 0; color: #555; font-size: 0.9em;"
+                    style="margin: 10px 0 5px 0; color: #555; font-size: 0.9em;",
                 ),
                 tags.ul(
                     tags.li("CMS Synthetic Public Use Files (Medicare claims data)"),
                     tags.li("MIMIC-IV Clinical Database (de-identified clinical notes)"),
                     tags.li("AHRQ Social Determinants of Health Database"),
                     tags.li("Synthetic sentiment data (call transcripts)"),
-                    style="color: #7f8c8d; font-size: 0.85em; line-height: 1.6; margin-bottom: 10px;"
+                    style="color: #7f8c8d; font-size: 0.85em; line-height: 1.6; margin-bottom: 10px;",
                 ),
                 ui.tags.p(
                     ui.tags.strong("Key Features Demonstrated:"),
-                    style="margin: 10px 0 5px 0; color: #555; font-size: 0.9em;"
+                    style="margin: 10px 0 5px 0; color: #555; font-size: 0.9em;",
                 ),
                 tags.ul(
-                    tags.li("Compound AI architecture with specialized agents (Sentiment, SDoH, Channel, Strategy)"),
-                    tags.li("Multi-modal data integration (claims + EHR + sentiment + social determinants)"),
+                    tags.li(
+                        "Compound AI architecture with specialized agents (Sentiment, SDoH, Channel, Strategy)"
+                    ),
+                    tags.li(
+                        "Multi-modal data integration (claims + EHR + sentiment + social determinants)"
+                    ),
                     tags.li("Agentic RAG for personalized member outreach via Anthropic Claude"),
                     tags.li("Real-time portfolio optimization with ROI modeling"),
                     tags.li("HIPAA-compliant architecture design patterns"),
-                    style="color: #7f8c8d; font-size: 0.85em; line-height: 1.6; margin-bottom: 15px;"
+                    style="color: #7f8c8d; font-size: 0.85em; line-height: 1.6; margin-bottom: 15px;",
                 ),
                 ui.tags.p(
                     "💡 ",
-                    ui.tags.em("This platform demonstrates production-grade AI capabilities using realistic healthcare data. All member data is synthetic or de-identified."),
-                    style="color: #667eea; font-size: 0.85em; margin-top: 10px; font-style: italic;"
+                    ui.tags.em(
+                        "This platform demonstrates production-grade AI capabilities using realistic healthcare data. All member data is synthetic or de-identified."
+                    ),
+                    style="color: #667eea; font-size: 0.85em; margin-top: 10px; font-style: italic;",
                 ),
-                class_="footer-demo-info"
+                class_="footer-demo-info",
             ),
             ui.tags.p(
                 "© 2026 StarGuard AI | Healthcare AI that delivers ROI, not just insights.",
-                class_="footer-copyright"
+                class_="footer-copyright",
             ),
-            class_="app-footer"
-        )
+            class_="app-footer",
+        ),
     )
 
 
@@ -286,7 +290,7 @@ def sidebar_brand() -> Tag:
         tags.span("⭐", class_="sg-star"),
         tags.h2("StarGuard AI"),
         tags.p("Medicare Advantage Intelligence Platform", class_="sg-tagline"),
-        class_="sg-sidebar-brand"
+        class_="sg-sidebar-brand",
     )
 
 
@@ -297,17 +301,14 @@ def nav_group_title(title: str) -> Tag:
 
 def page_header(title: str, tagline: str = "", subtitle: str = "") -> Tag:
     """Page header with purple gradient"""
-    children = [
-        tags.span("⭐", class_="sg-star"),
-        tags.h1(title)
-    ]
-    
+    children = [tags.span("⭐", class_="sg-star"), tags.h1(title)]
+
     if tagline:
         children.append(tags.p(tagline, class_="sg-header-tagline"))
-    
+
     if subtitle:
         children.append(tags.p(subtitle, class_="sg-header-subtitle"))
-    
+
     return tags.div(*children, class_="sg-header")
 
 
@@ -315,14 +316,14 @@ def metric_card(label: str, value: str, delta: str = "", delta_type: str = "posi
     """Metric card component"""
     children = [
         tags.div(label, class_="sg-metric-label"),
-        tags.div(value, class_="sg-metric-value")
+        tags.div(value, class_="sg-metric-value"),
     ]
-    
+
     if delta:
         delta_class = f"sg-metric-delta {delta_type}"
         delta_symbol = "↑" if delta_type == "positive" else "↓" if delta_type == "negative" else ""
         children.append(tags.div(f"{delta_symbol} {delta}", class_=delta_class))
-    
+
     return tags.div(*children, class_="sg-metric-card")
 
 
@@ -334,12 +335,12 @@ def metrics_row(*cards: Tag) -> Tag:
 def card(title: str = None, *children) -> Tag:
     """Generic content card"""
     card_children = []
-    
+
     if title:
         card_children.append(tags.h3(title, class_="sg-card-title"))
-    
+
     card_children.extend(children)
-    
+
     return tags.div(*card_children, class_="sg-card")
 
 
@@ -361,9 +362,9 @@ def security_badge() -> Tag:
         tags.div(
             tags.span("On-Premises", class_="sg-security-tag"),
             tags.span("Zero API Exposure", class_="sg-security-tag"),
-            tags.span("HIPAA-First", class_="sg-security-tag")
+            tags.span("HIPAA-First", class_="sg-security-tag"),
         ),
-        class_="sg-security-badge"
+        class_="sg-security-badge",
     )
 
 
@@ -375,7 +376,7 @@ def tech_badges() -> Tag:
         tags.span("📈 Plotly"),
         tags.span("🐘 PostgreSQL"),
         tags.span("🤖 ML/AI"),
-        class_="sg-tech-badges"
+        class_="sg-tech-badges",
     )
 
 
@@ -385,11 +386,14 @@ def qr_landing_card() -> Tag:
         tags.a(
             tags.img(src="qr-landing.png", alt="QR Code", class_="sg-qr-code"),
             href="https://tinyurl.com/bdevpdz5",
-            target="_blank"
+            target="_blank",
         ),
-        tags.p("Scan for portfolio, resume & contact info", style="text-align: center; margin-top: 0.5rem; font-size: 0.85rem; color: #6b7280;"),
+        tags.p(
+            "Scan for portfolio, resume & contact info",
+            style="text-align: center; margin-top: 0.5rem; font-size: 0.85rem; color: #6b7280;",
+        ),
         class_="sg-card",
-        style="max-width: 320px; margin: 0 auto; text-align: center;"
+        style="max-width: 320px; margin: 0 auto; text-align: center;",
     )
 
 
@@ -399,23 +403,20 @@ def footer() -> Tag:
         tags.h2("⭐ Medicare Advantage Intelligence Platform | StarGuard AI"),
         tags.p("Turning Data Into Stars"),
         tags.div(
-            tags.div(
-                tags.p("2.8–4.1×"),
-                tags.p("ROI")
-            ),
-            tags.div(
-                tags.p("$148M+"),
-                tags.p("Savings")
-            ),
-            tags.div(
-                tags.p("Zero"),
-                tags.p("PHI Exposure")
-            ),
-            class_="sg-footer-metrics"
+            tags.div(tags.p("2.8–4.1×"), tags.p("ROI")),
+            tags.div(tags.p("$148M+"), tags.p("Savings")),
+            tags.div(tags.p("Zero"), tags.p("PHI Exposure")),
+            class_="sg-footer-metrics",
         ),
-        tags.p("⚠️ Portfolio Demonstration: Using synthetic data to showcase real methodology and production-grade analytics.", style="font-size: 0.85rem; margin-top: 1rem; color: rgba(255,255,255,0.9);"),
-        tags.p("© 2024–2026 Robert Reichert | StarGuard AI™", style="font-size: 0.85rem; margin-top: 1rem; color: rgba(255,255,255,0.8);"),
-        class_="sg-footer"
+        tags.p(
+            "⚠️ Portfolio Demonstration: Using synthetic data to showcase real methodology and production-grade analytics.",
+            style="font-size: 0.85rem; margin-top: 1rem; color: rgba(255,255,255,0.9);",
+        ),
+        tags.p(
+            "© 2024–2026 Robert Reichert | StarGuard AI™",
+            style="font-size: 0.85rem; margin-top: 1rem; color: rgba(255,255,255,0.8);",
+        ),
+        class_="sg-footer",
     )
 
 

@@ -1,7 +1,6 @@
 """
 Slim ROI Calculator for Shiny — 3 methods + recommendation only (no DB).
 """
-from typing import Dict
 
 
 def calculate_roi_three_methods(
@@ -10,7 +9,7 @@ def calculate_roi_three_methods(
     revenue_per_closure: float = 100.0,
     membership: int = 1000,
     quality_bonus_per_star: float = 50.0,
-) -> Dict:
+) -> dict:
     """
     Calculate ROI using three methodologies.
     Method 1: Conservative (direct only). Method 2: Comprehensive (indirect). Method 3: CMS-Focused.
@@ -52,7 +51,7 @@ def recommend_roi_method(
     org_type: str = "payer",
     audience: str = "CFO",
     reporting: str = "internal",
-) -> Dict:
+) -> dict:
     """Recommend which ROI method to use."""
     if reporting == "CMS" or audience == "CMO":
         return {

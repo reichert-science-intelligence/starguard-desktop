@@ -1,7 +1,6 @@
 """
 Gap analysis and triple-loop validated gap analysis (slim, no DB).
 """
-from typing import Dict, List, Optional
 
 _HISTORICAL_CLOSURE_BENCHMARKS = {
     "max_closure_rate_per_quarter": 0.12,
@@ -9,13 +8,23 @@ _HISTORICAL_CLOSURE_BENCHMARKS = {
 }
 
 
-def get_gap_analysis(measure_id: str, start_date: str, end_date: str) -> Dict:
+def get_gap_analysis(measure_id: str, start_date: str, end_date: str) -> dict:
     """Gap analysis for a measure (structure only; no DB)."""
     return {
         "total_gaps": 150,
-        "gaps_by_reason": {"Not Scheduled": 60, "Missed Appointment": 45, "Lab Pending": 30, "Provider Delay": 15},
+        "gaps_by_reason": {
+            "Not Scheduled": 60,
+            "Missed Appointment": 45,
+            "Lab Pending": 30,
+            "Provider Delay": 15,
+        },
         "average_days_to_close": 12.5,
-        "closure_rate_by_intervention": {"Phone Call": 0.75, "Text Message": 0.60, "Mail": 0.45, "Provider Outreach": 0.85},
+        "closure_rate_by_intervention": {
+            "Phone Call": 0.75,
+            "Text Message": 0.60,
+            "Mail": 0.45,
+            "Provider Outreach": 0.85,
+        },
         "cost_per_closed_gap": 45.50,
         "gaps_by_priority": {"High": 50, "Medium": 70, "Low": 30},
     }
@@ -25,9 +34,9 @@ def get_gap_analysis_validated(
     measure_id: str,
     start_date: str,
     end_date: str,
-    projected_gap_close_pct: Optional[float] = None,
-    projected_timeline_months: Optional[float] = None,
-) -> Dict:
+    projected_gap_close_pct: float | None = None,
+    projected_timeline_months: float | None = None,
+) -> dict:
     """Triple-loop validated gap analysis: generate → validate → self-correct."""
     gap = get_gap_analysis(measure_id, start_date, end_date)
     closure_by_int = gap.get("closure_rate_by_intervention", {})
@@ -42,7 +51,7 @@ def get_gap_analysis_validated(
     achievable_pct_per_quarter = max_per_quarter * 100
     realistic_months = (projected_gap_close_pct / 10.0) * min_months_per_10
 
-    self_correction_message: Optional[str] = None
+    self_correction_message: str | None = None
     adjusted_timeline_months = projected_timeline_months
 
     if projected_gap_close_pct > achievable_pct_per_quarter and projected_timeline_months <= 3:
@@ -67,15 +76,17 @@ def get_gap_analysis_validated(
     if adjusted_timeline_months <= 6 and projected_gap_close_pct <= 20:
         confidence = min(95.0, confidence + 5)
 
-    recommendations_with_confidence: List[Dict] = []
+    recommendations_with_confidence: list[dict] = []
     for intervention, rate in sorted(closure_by_int.items(), key=lambda x: -x[1]):
         rec_conf = 70.0 + (rate * 25)
-        recommendations_with_confidence.append({
-            "intervention": intervention,
-            "historical_closure_rate": rate,
-            "confidence_score": min(95, rec_conf),
-            "recommendation": f"Validated across 20+ historical interventions (avg closure {rate*100:.0f}%).",
-        })
+        recommendations_with_confidence.append(
+            {
+                "intervention": intervention,
+                "historical_closure_rate": rate,
+                "confidence_score": min(95, rec_conf),
+                "recommendation": f"Validated across 20+ historical interventions (avg closure {rate * 100:.0f}%).",
+            }
+        )
 
     return {
         **gap,

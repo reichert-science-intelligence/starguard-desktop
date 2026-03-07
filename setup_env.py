@@ -20,8 +20,8 @@ def run_command(cmd, description):
     """Run a shell command and report status"""
     print(f"-> {description}...")
     try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=True)
-        print(f"  [OK] Success")
+        subprocess.run(cmd, shell=True, capture_output=True, text=True, check=True)
+        print("  [OK] Success")
         return True
     except subprocess.CalledProcessError as e:
         print(f"  [FAIL] {e.stderr or str(e)}")
@@ -49,7 +49,9 @@ def main():
 
     # Verify we're in the right directory
     if not Path("app.py").exists():
-        print("[FAIL] Error: app.py not found. Please run this script from starguard-shiny directory")
+        print(
+            "[FAIL] Error: app.py not found. Please run this script from starguard-shiny directory"
+        )
         print("  cd starguard-shiny")
         print("  python setup_env.py")
         sys.exit(1)
@@ -190,7 +192,7 @@ rsconnect/
         print("  [WARN] app.py does NOT have dotenv loading")
         print("\n  Add this at the TOP of app.py:")
         print("\n" + "-" * 70)
-        print('''from dotenv import load_dotenv
+        print("""from dotenv import load_dotenv
 import os
 
 load_dotenv()
@@ -199,7 +201,7 @@ if not os.environ.get("ANTHROPIC_API_KEY"):
     print("WARNING: ANTHROPIC_API_KEY not found - edit .env file")
 else:
     print("[OK] API key loaded successfully")
-''')
+""")
         print("-" * 70 + "\n")
 
     # ========================================================================

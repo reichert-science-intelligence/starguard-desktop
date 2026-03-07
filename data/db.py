@@ -6,7 +6,7 @@ Uses same connection logic as Streamlit project
 
 import os
 from pathlib import Path
-from typing import Optional
+
 import pandas as pd
 from sqlalchemy import create_engine, text
 from sqlalchemy.pool import QueuePool
@@ -20,13 +20,13 @@ def get_postgres_config() -> dict:
     """
     Get PostgreSQL configuration from environment variables.
     Uses same defaults as Streamlit project.
-    
+
     Priority: Environment variables > defaults
     """
     port = os.getenv("DB_PORT", "5432")
     if isinstance(port, str):
         port = int(port)
-    
+
     return {
         "host": os.getenv("DB_HOST", "localhost"),
         "database": os.getenv("DB_NAME", "hedis_portfolio"),
@@ -39,11 +39,18 @@ def get_postgres_config() -> dict:
 def get_sqlite_path() -> str:
     """Get path to SQLite database file (same location as Streamlit project)."""
     # Path to Streamlit project's SQLite database
-    streamlit_db_path = Path(__file__).parent.parent.parent / "Artifacts" / "project" / "phase4_dashboard" / "data" / "hedis_portfolio.db"
-    
+    streamlit_db_path = (
+        Path(__file__).parent.parent.parent
+        / "Artifacts"
+        / "project"
+        / "phase4_dashboard"
+        / "data"
+        / "hedis_portfolio.db"
+    )
+
     if streamlit_db_path.exists():
         return str(streamlit_db_path)
-    
+
     # Fallback: local SQLite database
     local_db_path = Path(__file__).parent.parent / "data" / "hedis_portfolio.db"
     return str(local_db_path)
@@ -56,47 +63,47 @@ def get_db_type() -> str:
     Same logic as Streamlit project.
     """
     global _db_type
-    
+
     if _db_type:
         return _db_type
-    
+
     # FIRST: Check if SQLite database file exists
     sqlite_path = get_sqlite_path()
     if os.path.exists(sqlite_path):
         try:
             # Test SQLite connection
             import sqlite3
+
             test_conn = sqlite3.connect(sqlite_path)
             test_conn.close()
-            _db_type = 'sqlite'
+            _db_type = "sqlite"
             print(f"[OK] Using SQLite database: {sqlite_path}")
-            return 'sqlite'
+            return "sqlite"
         except Exception:
             pass
-    
+
     # SECOND: Try PostgreSQL if SQLite is not available
-    has_postgres_config = (
-        os.getenv("DB_HOST") or 
-        os.getenv("DB_NAME") or 
-        os.getenv("DB_USER")
-    )
-    
+    has_postgres_config = os.getenv("DB_HOST") or os.getenv("DB_NAME") or os.getenv("DB_USER")
+
     if has_postgres_config:
         try:
             config = get_postgres_config()
             import psycopg2
+
             test_conn = psycopg2.connect(**config)
             test_conn.close()
-            _db_type = 'postgres'
-            print(f"[OK] Using PostgreSQL database: {config['host']}:{config['port']}/{config['database']}")
-            return 'postgres'
+            _db_type = "postgres"
+            print(
+                f"[OK] Using PostgreSQL database: {config['host']}:{config['port']}/{config['database']}"
+            )
+            return "postgres"
         except Exception:
             pass
-    
+
     # Fallback to SQLite (will create file if it doesn't exist)
-    _db_type = 'sqlite'
+    _db_type = "sqlite"
     print(f"[OK] Using SQLite database (fallback): {sqlite_path}")
-    return 'sqlite'
+    return "sqlite"
 
 
 def get_engine():
@@ -106,22 +113,22 @@ def get_engine():
     Supports both PostgreSQL and SQLite.
     """
     global _engine
-    
+
     if _engine is not None:
         return _engine
-    
+
     db_type = get_db_type()
-    
+
     try:
-        if db_type == 'postgres':
+        if db_type == "postgres":
             config = get_postgres_config()
-            
+
             # Build PostgreSQL connection string
             connection_string = (
                 f"postgresql://{config['user']}:{config['password']}"
                 f"@{config['host']}:{config['port']}/{config['database']}"
             )
-            
+
             # Create PostgreSQL engine with connection pooling
             _engine = create_engine(
                 connection_string,
@@ -129,9 +136,9 @@ def get_engine():
                 pool_size=5,
                 max_overflow=10,
                 pool_pre_ping=True,
-                echo=False
+                echo=False,
             )
-            
+
             # Test connection
             with _engine.connect() as conn:
                 result = conn.execute(text("SELECT current_database()"))
@@ -139,60 +146,60 @@ def get_engine():
                 print(f"[OK] Connected to PostgreSQL database: {db_name}")
                 print(f"     Host: {config['host']}:{config['port']}")
                 print(f"     User: {config['user']}")
-        
+
         else:
             # SQLite
             sqlite_path = get_sqlite_path()
             connection_string = f"sqlite:///{sqlite_path}"
-            
+
             # Create SQLite engine (no pooling needed for SQLite)
             _engine = create_engine(
                 connection_string,
                 echo=False,
-                connect_args={"check_same_thread": False}  # Allow multi-threaded access
+                connect_args={"check_same_thread": False},  # Allow multi-threaded access
             )
-            
+
             # Test connection
             with _engine.connect() as conn:
                 result = conn.execute(text("SELECT 1"))
                 print(f"[OK] Connected to SQLite database: {sqlite_path}")
-        
+
         return _engine
-        
+
     except Exception as e:
         print(f"[ERROR] Database connection error: {e}")
-        if db_type == 'postgres':
-            print(f"        Check your DB_HOST, DB_NAME, DB_USER, DB_PASSWORD environment variables")
+        if db_type == "postgres":
+            print("        Check your DB_HOST, DB_NAME, DB_USER, DB_PASSWORD environment variables")
         else:
             print(f"        Check SQLite database file: {get_sqlite_path()}")
         raise
 
 
-def query(sql: str, params: Optional[dict] = None) -> pd.DataFrame:
+def query(sql: str, params: dict | None = None) -> pd.DataFrame:
     """
     Execute a SQL query and return results as a pandas DataFrame.
-    
+
     Args:
         sql: SQL query string
         params: Optional dictionary of parameters for parameterized queries
-        
+
     Returns:
         DataFrame with query results
-        
+
     Raises:
         Exception: If query execution fails
     """
     try:
         engine = get_engine()
-        
+
         # Use pandas read_sql for better compatibility
         if params:
             df = pd.read_sql(sql, engine, params=params)
         else:
             df = pd.read_sql(sql, engine)
-        
+
         return df
-        
+
     except Exception as e:
         error_msg = f"Database query error: {e}"
         print(f"[ERROR] {error_msg}")

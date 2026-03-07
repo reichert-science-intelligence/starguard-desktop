@@ -2,9 +2,11 @@
 Social Determinants of Health - Barrier Analysis
 Phase 1 Week 1: SDoH mapping and gap burden visualization.
 """
+
 from shiny import ui
 from shinywidgets import output_widget
-from modules.shared_ui import create_header, create_footer
+
+from modules.shared_ui import create_footer, create_header
 
 
 def sdoh_content():

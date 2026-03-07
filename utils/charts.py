@@ -2,23 +2,23 @@
 Phase 4 Dashboard - Chart Generation Utilities
 Helper functions for creating Plotly visualizations
 """
-import plotly.graph_objects as go
-import plotly.express as px
+
 import pandas as pd
-from typing import Optional
 import pandas.api.types as pd_types
+import plotly.express as px
+import plotly.graph_objects as go
 
 # StarGuard AI theme colors
 MEDICAL_THEME = {
-    "primary": "#5B5B7E",      # StarGuard purple primary
-    "secondary": "#6F5F96",    # StarGuard purple secondary
-    "accent": "#8B7AB8",       # StarGuard purple accent
-    "warning": "#F59E0B",      # Gold accent
-    "error": "#c62828",        # Red
-    "success": "#10b981",      # Green accent
-    "info": "#1976d2",         # Blue
-    "background": "#F5F3F9",   # Light purple background
-    "text": "#1f2937",         # Dark gray text
+    "primary": "#5B5B7E",  # StarGuard purple primary
+    "secondary": "#6F5F96",  # StarGuard purple secondary
+    "accent": "#8B7AB8",  # StarGuard purple accent
+    "warning": "#F59E0B",  # Gold accent
+    "error": "#c62828",  # Red
+    "success": "#10b981",  # Green accent
+    "info": "#1976d2",  # Blue
+    "background": "#F5F3F9",  # Light purple background
+    "text": "#1f2937",  # Dark gray text
 }
 
 # Label mapping for common column names - All columns from queries mapped with headline capitalization
@@ -31,30 +31,24 @@ LABEL_MAP = {
     "roi_ratio": "ROI Ratio",
     "successful_closures": "Successful Closures",
     "total_interventions": "Total Interventions",
-    
     # Query 2: Cost per Closure by Activity
     "activity_name": "Activity Name",
     "avg_cost": "Average Cost ($)",
     "success_rate": "Success Rate (%)",
     "times_used": "Times Used",
     "cost_per_closure": "Cost per Closure ($)",
-    
     # Query 3: Monthly Intervention Trend
     "month": "Month",
     "month_start": "Month",
-    "total_investment": "Total Investment ($)",
-    
     # Query 4: Budget Variance
     "budget_allocated": "Budget Allocated ($)",
     "actual_spent": "Actual Spent ($)",
     "variance": "Variance ($)",
     "variance_pct": "Variance (%)",
     "budget_status": "Budget Status",
-    
     # Query 5: Cost Tier Comparison
     "cost_tier": "Cost Tier",
     "interventions_count": "Intervention Count",
-    
     # Common/Additional
     "total_closures": "Total Closures",
     "overall_success_rate": "Overall Success Rate (%)",
@@ -65,40 +59,42 @@ LABEL_MAP = {
 def format_column_label(column_name: str) -> str:
     """
     Convert a column name to a human-readable label with headline capitalization.
-    
+
     Args:
         column_name: Column name from dataframe
-        
+
     Returns:
         Formatted label string with headline capitalization (never "Undefined")
     """
     if not column_name or str(column_name).strip() == "":
         return "Value"
-    
+
     column_name = str(column_name).strip()
-    
+
     # Check if we have a direct mapping first
     if column_name in LABEL_MAP:
         label = LABEL_MAP[column_name]
         if label and label != "Undefined" and label.lower() != "undefined":
             return label
-    
+
     # Otherwise format the column name with headline capitalization (Title Case)
     # Replace underscores with spaces
     label = column_name.replace("_", " ")
-    
+
     # Apply headline capitalization - capitalize first letter of each word
     words = label.split()
     formatted_words = []
-    
+
     for word in words:
         if len(word) > 0:
             # Capitalize first letter, lowercase rest
-            formatted_word = word[0].upper() + word[1:].lower() if len(word) > 1 else word[0].upper()
+            formatted_word = (
+                word[0].upper() + word[1:].lower() if len(word) > 1 else word[0].upper()
+            )
             formatted_words.append(formatted_word)
-    
+
     label = " ".join(formatted_words)
-    
+
     # Handle special cases and acronyms (preserve uppercase for known acronyms)
     label = label.replace("Roi", "ROI")
     label = label.replace("Id", "ID")
@@ -106,13 +102,17 @@ def format_column_label(column_name: str) -> str:
     label = label.replace("Pct", "%")
     label = label.replace("Avg", "Average")
     label = label.replace("Avg Cost", "Average Cost")
-    
+
     # Add units if suggested by column name but not present
     if "cost" in column_name.lower() and "$" not in label:
         if "avg" in column_name.lower() or "average" in column_name.lower():
             label = "Average Cost ($)"
         elif "total" in column_name.lower():
-            label = "Total Investment ($)" if "investment" in column_name.lower() or "spent" in column_name.lower() else f"{label} ($)"
+            label = (
+                "Total Investment ($)"
+                if "investment" in column_name.lower() or "spent" in column_name.lower()
+                else f"{label} ($)"
+            )
         else:
             label = f"{label} ($)" if label else "Cost ($)"
     elif "rate" in column_name.lower() and "%" not in label and "ratio" not in label.lower():
@@ -121,13 +121,13 @@ def format_column_label(column_name: str) -> str:
         label = label.replace(" Pct", " (%)").replace("Pct", "%")
         if "%" not in label:
             label = f"{label} (%)"
-    
+
     # Final check - never return "Undefined" or empty
     if not label or label.strip() == "" or label.lower() == "undefined" or label == "Undefined":
         # Ultimate fallback - use column name with proper title case formatting
         label = column_name.replace("_", " ").title()
         label = label.replace("Roi", "ROI").replace("Id", "ID").replace("Hedis", "HEDIS")
-    
+
     return label
 
 
@@ -136,17 +136,17 @@ def create_bar_chart(
     x_col: str,
     y_col: str,
     title: str,
-    x_label: Optional[str] = None,
-    y_label: Optional[str] = None,
-    color_col: Optional[str] = None,
-    color_scale: Optional[list] = None,
+    x_label: str | None = None,
+    y_label: str | None = None,
+    color_col: str | None = None,
+    color_scale: list | None = None,
     horizontal: bool = False,
 ) -> go.Figure:
     """Create a professional bar chart."""
     replacement_label = None
     # Format labels for all columns used in the chart
     labels_dict = {}
-    
+
     # Always add labels for all columns used - force proper formatting
     for col in [x_col, y_col, color_col]:
         if col:
@@ -166,21 +166,32 @@ def create_bar_chart(
                 else:
                     label = format_column_label(col)
                 labels_dict[col] = label
-            
+
             # Final safety check - ensure label is never "Undefined"
             if col in labels_dict:
-                if not labels_dict[col] or labels_dict[col] == "Undefined" or labels_dict[col].lower() == "undefined":
+                if (
+                    not labels_dict[col]
+                    or labels_dict[col] == "Undefined"
+                    or labels_dict[col].lower() == "undefined"
+                ):
                     labels_dict[col] = format_column_label(col)
                     # If still undefined, use manual formatting
                     if not labels_dict[col] or labels_dict[col] == "Undefined":
                         labels_dict[col] = col.replace("_", " ").title()
-                        labels_dict[col] = labels_dict[col].replace("Roi", "ROI").replace("Id", "ID").replace("Hedis", "HEDIS")
-    
+                        labels_dict[col] = (
+                            labels_dict[col]
+                            .replace("Roi", "ROI")
+                            .replace("Id", "ID")
+                            .replace("Hedis", "HEDIS")
+                        )
+
     # Early return for simple horizontal bar charts (no color column)
     if horizontal and not color_col:
-        fig = go.Figure(go.Bar(x=df[y_col], y=df[x_col], orientation='h'))
+        fig = go.Figure(go.Bar(x=df[y_col], y=df[x_col], orientation="h"))
         fig.update_layout(
-            title=dict(text=str(title) if title else "", font=dict(size=12, color=MEDICAL_THEME["primary"])),
+            title=dict(
+                text=str(title) if title else "", font=dict(size=12, color=MEDICAL_THEME["primary"])
+            ),
             template="plotly_white",
             plot_bgcolor="white",
             paper_bgcolor="white",
@@ -189,14 +200,18 @@ def create_bar_chart(
             yaxis=dict(title=y_label or format_column_label(x_col), gridcolor="#e0e0e0"),
             height=350,
             autosize=True,
-            margin=dict(l=10, r=10, t=50, b=60)
+            margin=dict(l=10, r=10, t=50, b=60),
         )
         return fig
-    
+
     if color_col:
         # Check if color column is categorical (string type) or continuous (numeric)
-        is_categorical = df[color_col].dtype == 'object' or pd_types.is_string_dtype(df[color_col]) or df[color_col].dtype.name == 'category'
-        
+        is_categorical = (
+            df[color_col].dtype == "object"
+            or pd_types.is_string_dtype(df[color_col])
+            or df[color_col].dtype.name == "category"
+        )
+
         if is_categorical:
             # Use discrete color sequence for categorical data
             if horizontal:
@@ -211,9 +226,15 @@ def create_bar_chart(
                         "Over Budget": MEDICAL_THEME["error"],
                         "Under Budget": MEDICAL_THEME["success"],
                         "On Budget": MEDICAL_THEME["accent"],
-                    } if color_col == "budget_status" else None,
-                    color_discrete_sequence=[MEDICAL_THEME["primary"], MEDICAL_THEME["secondary"], MEDICAL_THEME["accent"]],
-                    orientation='h',
+                    }
+                    if color_col == "budget_status"
+                    else None,
+                    color_discrete_sequence=[
+                        MEDICAL_THEME["primary"],
+                        MEDICAL_THEME["secondary"],
+                        MEDICAL_THEME["accent"],
+                    ],
+                    orientation="h",
                 )
             else:
                 fig = px.bar(
@@ -227,12 +248,22 @@ def create_bar_chart(
                         "Over Budget": MEDICAL_THEME["error"],
                         "Under Budget": MEDICAL_THEME["success"],
                         "On Budget": MEDICAL_THEME["accent"],
-                    } if color_col == "budget_status" else None,
-                    color_discrete_sequence=[MEDICAL_THEME["primary"], MEDICAL_THEME["secondary"], MEDICAL_THEME["accent"]],
+                    }
+                    if color_col == "budget_status"
+                    else None,
+                    color_discrete_sequence=[
+                        MEDICAL_THEME["primary"],
+                        MEDICAL_THEME["secondary"],
+                        MEDICAL_THEME["accent"],
+                    ],
                 )
             # Update legend title for categorical color - set it explicitly
             legend_label = labels_dict.get(color_col, format_column_label(color_col))
-            if not legend_label or legend_label == "Undefined" or legend_label.lower() == "undefined":
+            if (
+                not legend_label
+                or legend_label == "Undefined"
+                or legend_label.lower() == "undefined"
+            ):
                 legend_label = color_col.replace("_", " ").title()
                 legend_label = legend_label.replace("Roi", "ROI").replace("Id", "ID")
             fig.update_layout(
@@ -245,12 +276,12 @@ def create_bar_chart(
                     y=-0.15,  # Closer to chart now that x-axis labels are gone
                     xanchor="center",
                     x=0.5,
-                    bgcolor='rgba(255,255,255,0.9)',
-                    bordercolor='rgba(0,0,0,0.1)',
-                    borderwidth=1
+                    bgcolor="rgba(255,255,255,0.9)",
+                    bordercolor="rgba(0,0,0,0.1)",
+                    borderwidth=1,
                 ),
                 height=350,  # Compact height for vertical compression
-                autosize=True
+                autosize=True,
             )
         else:
             # Use continuous color scale for numeric data
@@ -262,19 +293,28 @@ def create_bar_chart(
                 colorbar_label = labels_dict.get(color_col)
                 if not colorbar_label:
                     colorbar_label = format_column_label(color_col)
-            
+
             # Final check - ensure label is never "Undefined"
-            if not colorbar_label or colorbar_label == "Undefined" or colorbar_label.lower() == "undefined" or str(colorbar_label).strip() == "":
+            if (
+                not colorbar_label
+                or colorbar_label == "Undefined"
+                or colorbar_label.lower() == "undefined"
+                or str(colorbar_label).strip() == ""
+            ):
                 colorbar_label = format_column_label(color_col)
                 if not colorbar_label or colorbar_label == "Undefined":
                     colorbar_label = color_col.replace("_", " ").title()
-                    colorbar_label = colorbar_label.replace("Roi", "ROI").replace("Id", "ID").replace("Hedis", "HEDIS")
-            
+                    colorbar_label = (
+                        colorbar_label.replace("Roi", "ROI")
+                        .replace("Id", "ID")
+                        .replace("Hedis", "HEDIS")
+                    )
+
             # Ensure it's a string
             colorbar_label = str(colorbar_label).strip()
             if not colorbar_label:
                 colorbar_label = format_column_label(color_col)
-            
+
             # Create figure WITHOUT labels dict first - we'll set labels manually
             if horizontal:
                 fig = px.bar(
@@ -284,8 +324,9 @@ def create_bar_chart(
                     color=color_col,
                     title=title,
                     labels=labels_dict,  # Still pass it but override manually after
-                    color_continuous_scale=color_scale or [MEDICAL_THEME["primary"], MEDICAL_THEME["secondary"]],
-                    orientation='h',
+                    color_continuous_scale=color_scale
+                    or [MEDICAL_THEME["primary"], MEDICAL_THEME["secondary"]],
+                    orientation="h",
                 )
             else:
                 fig = px.bar(
@@ -295,40 +336,47 @@ def create_bar_chart(
                     color=color_col,
                     title=title,
                     labels=labels_dict,  # Still pass it but override manually after
-                    color_continuous_scale=color_scale or [MEDICAL_THEME["primary"], MEDICAL_THEME["secondary"]],
+                    color_continuous_scale=color_scale
+                    or [MEDICAL_THEME["primary"], MEDICAL_THEME["secondary"]],
                 )
-            
+
             # FORCE set colorbar title - use the most direct method that works
             # Set colorbar title immediately using update_coloraxes (this is the standard method)
             fig.update_coloraxes(colorbar_title=colorbar_label)
-            
+
             # Also set it via update_layout as backup
             fig.update_layout(
                 coloraxis_colorbar_title=colorbar_label,
                 coloraxis_colorbar_title_side="right",
                 coloraxis_colorbar_title_font_size=11,
                 height=350,  # Compact height for vertical compression
-                autosize=True
+                autosize=True,
             )
-            
+
             # Directly access and force set the colorbar title text
             # This is the most reliable method - directly modify the object
-            if hasattr(fig.layout, 'coloraxis') and fig.layout.coloraxis:
-                if hasattr(fig.layout.coloraxis, 'colorbar') and fig.layout.coloraxis.colorbar:
+            if hasattr(fig.layout, "coloraxis") and fig.layout.coloraxis:
+                if hasattr(fig.layout.coloraxis, "colorbar") and fig.layout.coloraxis.colorbar:
                     # Direct assignment - this is the most reliable
-                    if hasattr(fig.layout.coloraxis.colorbar, 'title'):
+                    if hasattr(fig.layout.coloraxis.colorbar, "title"):
                         if fig.layout.coloraxis.colorbar.title:
                             # Force set the text attribute directly
-                            if hasattr(fig.layout.coloraxis.colorbar.title, 'text'):
+                            if hasattr(fig.layout.coloraxis.colorbar.title, "text"):
                                 fig.layout.coloraxis.colorbar.title.text = colorbar_label
                             else:
                                 # Create a new title object
-                                fig.layout.coloraxis.colorbar.title = dict(text=colorbar_label, side="right", font=dict(size=11))
+                                fig.layout.coloraxis.colorbar.title = dict(
+                                    text=colorbar_label, side="right", font=dict(size=11)
+                                )
                         else:
-                            fig.layout.coloraxis.colorbar.title = dict(text=colorbar_label, side="right", font=dict(size=11))
+                            fig.layout.coloraxis.colorbar.title = dict(
+                                text=colorbar_label, side="right", font=dict(size=11)
+                            )
                     else:
                         # Create title attribute
-                        fig.layout.coloraxis.colorbar.title = dict(text=colorbar_label, side="right", font=dict(size=11))
+                        fig.layout.coloraxis.colorbar.title = dict(
+                            text=colorbar_label, side="right", font=dict(size=11)
+                        )
     else:
         # Handle horizontal bar charts
         if horizontal:
@@ -339,7 +387,7 @@ def create_bar_chart(
                 title=title,
                 labels=labels_dict,
                 color_discrete_sequence=[MEDICAL_THEME["primary"]],
-                orientation='h',
+                orientation="h",
             )
         else:
             fig = px.bar(
@@ -350,15 +398,15 @@ def create_bar_chart(
                 labels=labels_dict,
                 color_discrete_sequence=[MEDICAL_THEME["primary"]],
             )
-    
+
     # Format axis labels (swap if horizontal)
     if horizontal:
-        x_axis_title = y_label or format_column_label(y_col) if y_label is None else y_label
-        y_axis_title = x_label or format_column_label(x_col) if x_label is None else x_label
+        y_label or format_column_label(y_col) if y_label is None else y_label
+        x_label or format_column_label(x_col) if x_label is None else x_label
     else:
-        x_axis_title = x_label or format_column_label(x_col) if x_label is None else x_label
-        y_axis_title = y_label or format_column_label(y_col) if y_label is None else y_label
-    
+        x_label or format_column_label(x_col) if x_label is None else x_label
+        y_label or format_column_label(y_col) if y_label is None else y_label
+
     # Build layout dict - ensure title is set properly with responsive design
     layout_dict = {
         "template": "plotly_white",
@@ -373,71 +421,78 @@ def create_bar_chart(
             y=0.98,  # Position title higher
             yanchor="top",
             automargin=True,
-            pad=dict(t=0, b=10)  # Minimal padding
+            pad=dict(t=0, b=10),  # Minimal padding
         ),
         "xaxis": dict(
-            gridcolor="#e0e0e0", 
+            gridcolor="#e0e0e0",
             title=None,  # Remove axis title text completely
             showticklabels=False,  # Hide tick labels (prevents overlap on mobile)
             showline=True,  # Show the axis line
             showgrid=True,  # Show grid lines
-            automargin=True
+            automargin=True,
         ),
         "yaxis": dict(
-            gridcolor="#e0e0e0", 
+            gridcolor="#e0e0e0",
             title=None,  # Remove y-axis title text
             showticklabels=True,  # Keep y-axis numbers visible
             showline=True,  # Show the axis line
             showgrid=True,  # Show grid lines
-            automargin=True
+            automargin=True,
         ),
         "hovermode": "x unified",
         "autosize": True,  # Make chart responsive for mobile
         "height": 550,  # Reduced height for better mobile display
         "margin": dict(l=10, r=10, t=50, b=60),  # Mobile-friendly margins
         "legend": dict(
-            orientation='h',
-            yanchor='top',
-            y=-0.2,
-            xanchor='center',
-            x=0.5,
-            font=dict(size=9)
-        )
+            orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5, font=dict(size=9)
+        ),
     }
-    
+
     # Apply layout - don't override legend/colorbar titles that were already set in categorical/continuous sections
     fig.update_layout(**layout_dict)
-    
+
     # Final aggressive safety check - ensure colorbar/legend titles are never "Undefined"
     if color_col:
         is_categorical = (
-            df[color_col].dtype == 'object' or 
-            pd_types.is_string_dtype(df[color_col]) or 
-            df[color_col].dtype.name == 'category'
+            df[color_col].dtype == "object"
+            or pd_types.is_string_dtype(df[color_col])
+            or df[color_col].dtype.name == "category"
         )
-        
+
         # Get label from our dictionary - ensure it's properly formatted
         final_label = labels_dict.get(color_col)
         if not final_label:
             final_label = format_column_label(color_col)
-        
+
         # Ensure label is never "Undefined"
-        if not final_label or final_label == "Undefined" or final_label.lower() == "undefined" or final_label.strip() == "":
+        if (
+            not final_label
+            or final_label == "Undefined"
+            or final_label.lower() == "undefined"
+            or final_label.strip() == ""
+        ):
             final_label = format_column_label(color_col)
             if not final_label or final_label == "Undefined":
                 final_label = color_col.replace("_", " ").title()
-                final_label = final_label.replace("Roi", "ROI").replace("Id", "ID").replace("Hedis", "HEDIS")
-        
+                final_label = (
+                    final_label.replace("Roi", "ROI").replace("Id", "ID").replace("Hedis", "HEDIS")
+                )
+
         # Convert to string and strip
         final_label = str(final_label).strip()
-        
+
         # Force update to ensure it's set correctly - try multiple methods
         if is_categorical:
             # Update legend title - preserve height
-            fig.update_layout(legend_title_text=final_label, height=350, autosize=True, margin=dict(l=10, r=10, t=50, b=60))
-            if hasattr(fig.layout, 'legend') and fig.layout.legend:
-                if hasattr(fig.layout.legend, 'title'):
-                    if hasattr(fig.layout.legend.title, 'text'):
+            fig.update_layout(
+                legend_title_text=final_label,
+                height=350,
+                autosize=True,
+                margin=dict(l=10, r=10, t=50, b=60),
+            )
+            if hasattr(fig.layout, "legend") and fig.layout.legend:
+                if hasattr(fig.layout.legend, "title"):
+                    if hasattr(fig.layout.legend.title, "text"):
                         fig.layout.legend.title.text = final_label
         else:
             # Update colorbar title - try all methods
@@ -445,116 +500,169 @@ def create_bar_chart(
                 fig.update_coloraxes(colorbar_title=final_label)
             except:
                 pass
-            
+
             try:
-                fig.update_layout(coloraxis_colorbar_title=final_label, height=350, autosize=True, margin=dict(l=10, r=10, t=50, b=60), title=dict(font=dict(size=12), x=0.5))
+                fig.update_layout(
+                    coloraxis_colorbar_title=final_label,
+                    height=350,
+                    autosize=True,
+                    margin=dict(l=10, r=10, t=50, b=60),
+                    title=dict(font=dict(size=12), x=0.5),
+                )
             except:
                 pass
-            
+
             # Update colorbar directly on traces - FORCE update
             for trace in fig.data:
-                if hasattr(trace, 'marker') and trace.marker:
-                    if hasattr(trace.marker, 'colorbar'):
+                if hasattr(trace, "marker") and trace.marker:
+                    if hasattr(trace.marker, "colorbar"):
                         # Force create/update colorbar title
                         if trace.marker.colorbar:
                             trace.marker.colorbar.title = dict(
-                                text=final_label,
-                                side="right",
-                                font=dict(size=11)
+                                text=final_label, side="right", font=dict(size=11)
                             )
                         else:
                             trace.marker.colorbar = dict(
                                 title=dict(text=final_label, side="right", font=dict(size=11))
                             )
-    
+
     # Final aggressive check - ensure NO trace has "Undefined" as name and no legend/colorbar has "Undefined" title
     for trace in fig.data:
         # Check trace name
-        if hasattr(trace, 'name'):
+        if hasattr(trace, "name"):
             trace_name = str(trace.name) if trace.name else ""
-            if not trace_name or trace_name.strip() == "" or trace_name.strip() == "Undefined" or trace_name.strip().lower() == "undefined":
+            if (
+                not trace_name
+                or trace_name.strip() == ""
+                or trace_name.strip() == "Undefined"
+                or trace_name.strip().lower() == "undefined"
+            ):
                 # Get proper label from y_col if available
                 if y_col in labels_dict:
                     trace.name = labels_dict[y_col]
                 else:
                     trace.name = format_column_label(y_col) if y_col else "Data Series"
-        
+
         # Check colorbar if it exists - FORCE create/update
-        if color_col and hasattr(trace, 'marker') and trace.marker:
+        if color_col and hasattr(trace, "marker") and trace.marker:
             replacement_label = labels_dict.get(color_col, format_column_label(color_col))
             if not replacement_label or replacement_label == "Undefined":
                 replacement_label = format_column_label(color_col)
-            
+
             replacement_label = str(replacement_label).strip()
-            
+
             # Force set colorbar title - create dict if needed
-            if hasattr(trace.marker, 'colorbar'):
+            if hasattr(trace.marker, "colorbar"):
                 if trace.marker.colorbar:
                     # Update existing colorbar
-                    if hasattr(trace.marker.colorbar, 'title'):
+                    if hasattr(trace.marker.colorbar, "title"):
                         if trace.marker.colorbar.title:
                             # Check if title is undefined
                             current_title = ""
-                            if hasattr(trace.marker.colorbar.title, 'text'):
-                                current_title = str(trace.marker.colorbar.title.text) if trace.marker.colorbar.title.text else ""
-                            
-                            if not current_title or current_title.strip() == "Undefined" or current_title.strip().lower() == "undefined":
-                                trace.marker.colorbar.title = dict(text=replacement_label, side="right", font=dict(size=11))
+                            if hasattr(trace.marker.colorbar.title, "text"):
+                                current_title = (
+                                    str(trace.marker.colorbar.title.text)
+                                    if trace.marker.colorbar.title.text
+                                    else ""
+                                )
+
+                            if (
+                                not current_title
+                                or current_title.strip() == "Undefined"
+                                or current_title.strip().lower() == "undefined"
+                            ):
+                                trace.marker.colorbar.title = dict(
+                                    text=replacement_label, side="right", font=dict(size=11)
+                                )
                         else:
-                            trace.marker.colorbar.title = dict(text=replacement_label, side="right", font=dict(size=11))
+                            trace.marker.colorbar.title = dict(
+                                text=replacement_label, side="right", font=dict(size=11)
+                            )
                     else:
-                        trace.marker.colorbar.title = dict(text=replacement_label, side="right", font=dict(size=11))
+                        trace.marker.colorbar.title = dict(
+                            text=replacement_label, side="right", font=dict(size=11)
+                        )
                 else:
                     # Create colorbar if it doesn't exist
                     trace.marker.colorbar = dict(
                         title=dict(text=replacement_label, side="right", font=dict(size=11))
                     )
-    
+
     # Final check on layout legend/colorbar titles
-    if hasattr(fig.layout, 'legend') and fig.layout.legend:
-        if hasattr(fig.layout.legend, 'title') and fig.layout.legend.title:
-            if hasattr(fig.layout.legend.title, 'text'):
-                legend_title = str(fig.layout.legend.title.text) if fig.layout.legend.title.text else ""
-                if not legend_title or legend_title.strip() == "Undefined" or legend_title.strip().lower() == "undefined":
+    if hasattr(fig.layout, "legend") and fig.layout.legend:
+        if hasattr(fig.layout.legend, "title") and fig.layout.legend.title:
+            if hasattr(fig.layout.legend.title, "text"):
+                legend_title = (
+                    str(fig.layout.legend.title.text) if fig.layout.legend.title.text else ""
+                )
+                if (
+                    not legend_title
+                    or legend_title.strip() == "Undefined"
+                    or legend_title.strip().lower() == "undefined"
+                ):
                     replacement_label = None
                     if color_col:
-                        replacement_label = labels_dict.get(color_col, format_column_label(color_col))
+                        replacement_label = labels_dict.get(
+                            color_col, format_column_label(color_col)
+                        )
                     if not replacement_label or replacement_label == "Undefined":
-                        replacement_label = format_column_label(color_col) if color_col else "Legend"
-                    fig.update_layout(legend_title_text=str(replacement_label), height=350, autosize=True, margin=dict(l=30, r=30, t=30, b=30))
-    
+                        replacement_label = (
+                            format_column_label(color_col) if color_col else "Legend"
+                        )
+                    fig.update_layout(
+                        legend_title_text=str(replacement_label),
+                        height=350,
+                        autosize=True,
+                        margin=dict(l=30, r=30, t=30, b=30),
+                    )
+
     # Final check on axis titles - ensure they're not "Undefined"
     # Axis titles are intentionally set to None in layout to save space
     # No need to update axis titles - they should remain None
-    
+
     # Final check on layout-level colorbar (for continuous color scales)
     if color_col:
         replacement_label = labels_dict.get(color_col, format_column_label(color_col))
         if not replacement_label or replacement_label == "Undefined":
             replacement_label = format_column_label(color_col)
         replacement_label = str(replacement_label).strip()
-        
+
         # Check coloraxis.colorbar in layout (common location for continuous scales)
-        if hasattr(fig.layout, 'coloraxis') and fig.layout.coloraxis:
-            if hasattr(fig.layout.coloraxis, 'colorbar') and fig.layout.coloraxis.colorbar:
-                if hasattr(fig.layout.coloraxis.colorbar, 'title'):
+        if hasattr(fig.layout, "coloraxis") and fig.layout.coloraxis:
+            if hasattr(fig.layout.coloraxis, "colorbar") and fig.layout.coloraxis.colorbar:
+                if hasattr(fig.layout.coloraxis.colorbar, "title"):
                     if fig.layout.coloraxis.colorbar.title:
-                        current_title = str(fig.layout.coloraxis.colorbar.title.text) if hasattr(fig.layout.coloraxis.colorbar.title, 'text') and fig.layout.coloraxis.colorbar.title.text else ""
-                        if not current_title or current_title.strip() == "Undefined" or current_title.strip().lower() == "undefined":
-                            fig.layout.coloraxis.colorbar.title = dict(text=replacement_label, side="right", font=dict(size=11))
+                        current_title = (
+                            str(fig.layout.coloraxis.colorbar.title.text)
+                            if hasattr(fig.layout.coloraxis.colorbar.title, "text")
+                            and fig.layout.coloraxis.colorbar.title.text
+                            else ""
+                        )
+                        if (
+                            not current_title
+                            or current_title.strip() == "Undefined"
+                            or current_title.strip().lower() == "undefined"
+                        ):
+                            fig.layout.coloraxis.colorbar.title = dict(
+                                text=replacement_label, side="right", font=dict(size=11)
+                            )
                     else:
-                        fig.layout.coloraxis.colorbar.title = dict(text=replacement_label, side="right", font=dict(size=11))
+                        fig.layout.coloraxis.colorbar.title = dict(
+                            text=replacement_label, side="right", font=dict(size=11)
+                        )
                 else:
                     # Create colorbar title if it doesn't exist
-                    if not hasattr(fig.layout.coloraxis.colorbar, 'title'):
-                        fig.layout.coloraxis.colorbar.title = dict(text=replacement_label, side="right", font=dict(size=11))
-    
+                    if not hasattr(fig.layout.coloraxis.colorbar, "title"):
+                        fig.layout.coloraxis.colorbar.title = dict(
+                            text=replacement_label, side="right", font=dict(size=11)
+                        )
+
     # Final safety check: ensure height is always an integer, never None
-    if not hasattr(fig.layout, 'height') or fig.layout.height is None:
+    if not hasattr(fig.layout, "height") or fig.layout.height is None:
         fig.update_layout(height=350, autosize=True, margin=dict(l=10, r=10, t=50, b=60))
     elif not isinstance(fig.layout.height, int):
         fig.update_layout(height=350, autosize=True, margin=dict(l=10, r=10, t=50, b=60))
-    
+
     return fig
 
 
@@ -562,17 +670,17 @@ def create_scatter_plot(
     df: pd.DataFrame,
     x_col: str,
     y_col: str,
-    size_col: Optional[str] = None,
-    color_col: Optional[str] = None,
-    text_col: Optional[str] = None,
+    size_col: str | None = None,
+    color_col: str | None = None,
+    text_col: str | None = None,
     title: str = "",
-    x_label: Optional[str] = None,
-    y_label: Optional[str] = None,
+    x_label: str | None = None,
+    y_label: str | None = None,
 ) -> go.Figure:
     """Create a professional scatter plot with optional bubble sizing."""
     # Format labels for all columns used in the chart
     labels_dict = {}
-    
+
     # Add labels for all columns that exist in dataframe
     for col in [x_col, y_col, size_col, color_col, text_col]:
         if col and col in df.columns:
@@ -582,13 +690,13 @@ def create_scatter_plot(
                 labels_dict[col] = y_label or format_column_label(col)
             else:
                 labels_dict[col] = format_column_label(col)
-    
+
     # Create scatter plot WITHOUT text labels to avoid overlap
     # All information will be shown in hover tooltips instead
     hover_data_dict = {}
     if text_col:
         hover_data_dict[text_col] = True  # Include text in hover but not as visible label
-    
+
     fig = px.scatter(
         df,
         x=x_col,
@@ -597,20 +705,24 @@ def create_scatter_plot(
         color=color_col,
         title=title,
         labels=labels_dict,
-        color_continuous_scale=[MEDICAL_THEME["primary"], MEDICAL_THEME["secondary"], MEDICAL_THEME["accent"]],
+        color_continuous_scale=[
+            MEDICAL_THEME["primary"],
+            MEDICAL_THEME["secondary"],
+            MEDICAL_THEME["accent"],
+        ],
         size_max=30,
         hover_data=hover_data_dict if hover_data_dict else None,
     )
-    
+
     # Format axis labels
     x_axis_title = x_label or format_column_label(x_col) if x_label is None else x_label
     y_axis_title = y_label or format_column_label(y_col) if y_label is None else y_label
-    
+
     # Format colorbar label if color column exists - do this BEFORE layout update
     colorbar_title = None
     if color_col:
         colorbar_title = format_column_label(color_col)
-    
+
     fig.update_layout(
         template="plotly_white",
         plot_bgcolor="#FFFFFF",
@@ -624,57 +736,62 @@ def create_scatter_plot(
             y=0.98,  # Position title higher
             yanchor="top",
             automargin=True,
-            pad=dict(t=0, b=10)  # Minimal padding
+            pad=dict(t=0, b=10),  # Minimal padding
         ),
         xaxis=dict(
-            gridcolor="#e0e0e0", 
+            gridcolor="#e0e0e0",
             title=None,  # Remove axis title text completely
             showticklabels=False,  # Hide tick labels (prevents overlap on mobile)
             showline=True,  # Show the axis line
             showgrid=True,  # Show grid lines
-            automargin=True
+            automargin=True,
         ),
         yaxis=dict(
-            gridcolor="#e0e0e0", 
+            gridcolor="#e0e0e0",
             title=None,  # Remove y-axis title text
             showticklabels=True,  # Keep y-axis numbers visible
             showline=True,  # Show the axis line
             showgrid=True,  # Show grid lines
-            automargin=True
+            automargin=True,
         ),
         hovermode="closest",
         autosize=True,  # Make chart responsive for mobile
         height=350,  # Compact height for vertical compression
         margin=dict(l=10, r=10, t=50, b=60),
         legend=dict(
-            orientation='h',
-            yanchor='top',
-            y=-0.2,
-            xanchor='center',
-            x=0.5,
-            font=dict(size=9)
-        )
+            orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5, font=dict(size=9)
+        ),
     )
-    
+
     # Set colorbar title after layout update
     if color_col and colorbar_title:
         # Ensure label is never "Undefined"
-        if not colorbar_title or colorbar_title == "Undefined" or colorbar_title.lower() == "undefined":
+        if (
+            not colorbar_title
+            or colorbar_title == "Undefined"
+            or colorbar_title.lower() == "undefined"
+        ):
             colorbar_title = color_col.replace("_", " ").title()
-        
+
         # Try multiple methods to ensure colorbar title is set
         try:
             fig.update_coloraxes(colorbar_title=colorbar_title)
         except:
             try:
-                fig.update_layout(coloraxis_colorbar_title=colorbar_title, height=450, autosize=True, margin=dict(l=10, r=10, t=50, b=60), title=dict(font=dict(size=12), x=0.5))
+                fig.update_layout(
+                    coloraxis_colorbar_title=colorbar_title,
+                    height=450,
+                    autosize=True,
+                    margin=dict(l=10, r=10, t=50, b=60),
+                    title=dict(font=dict(size=12), x=0.5),
+                )
             except:
                 # Last resort: try updating traces
                 try:
                     fig.update_traces(marker_colorbar_title=colorbar_title)
                 except:
                     pass
-    
+
     # Update hover template to show all information clearly
     # Remove text labels from points - show everything in hover tooltips instead
     if text_col:
@@ -682,33 +799,32 @@ def create_scatter_plot(
         # Plotly Express puts hover_data columns in customdata array
         # customdata[0] contains the text_col values when hover_data is used
         hover_template = (
-            f'<b>%{{customdata[0]}}</b><br>' +
-            f'{x_axis_title}: $%{{x:.2f}}<br>' +
-            f'{y_axis_title}: %{{y:.1f}}%<br>'
+            "<b>%{customdata[0]}</b><br>"
+            + f"{x_axis_title}: $%{{x:.2f}}<br>"
+            + f"{y_axis_title}: %{{y:.1f}}%<br>"
         )
         if size_col:
-            hover_template += f'{format_column_label(size_col)}: %{{marker.size}}<br>'
-        hover_template += '<extra></extra>'
-        
+            hover_template += f"{format_column_label(size_col)}: %{{marker.size}}<br>"
+        hover_template += "<extra></extra>"
+
         fig.update_traces(hovertemplate=hover_template)
     else:
         # Standard hover template without text column
         hover_template = (
-            f'<b>{x_axis_title}:</b> $%{{x:.2f}}<br>' +
-            f'<b>{y_axis_title}:</b> %{{y:.1f}}%<br>'
+            f"<b>{x_axis_title}:</b> $%{{x:.2f}}<br>" + f"<b>{y_axis_title}:</b> %{{y:.1f}}%<br>"
         )
         if size_col:
-            hover_template += f'<b>{format_column_label(size_col)}:</b> %{{marker.size}}<br>'
-        hover_template += '<extra></extra>'
-        
+            hover_template += f"<b>{format_column_label(size_col)}:</b> %{{marker.size}}<br>"
+        hover_template += "<extra></extra>"
+
         fig.update_traces(hovertemplate=hover_template)
-    
+
     # Final safety check: ensure height is always an integer, never None
-    if not hasattr(fig.layout, 'height') or fig.layout.height is None:
+    if not hasattr(fig.layout, "height") or fig.layout.height is None:
         fig.update_layout(height=350, autosize=True, margin=dict(l=10, r=10, t=50, b=60))
     elif not isinstance(fig.layout.height, int):
         fig.update_layout(height=350, autosize=True, margin=dict(l=10, r=10, t=50, b=60))
-    
+
     return fig
 
 
@@ -717,14 +833,19 @@ def create_line_chart(
     x_col: str,
     y_cols: list,
     title: str,
-    x_label: Optional[str] = None,
-    y_label: Optional[str] = None,
+    x_label: str | None = None,
+    y_label: str | None = None,
 ) -> go.Figure:
     """Create a professional multi-line chart."""
     fig = go.Figure()
-    
-    colors = [MEDICAL_THEME["primary"], MEDICAL_THEME["secondary"], MEDICAL_THEME["accent"], MEDICAL_THEME["info"]]
-    
+
+    colors = [
+        MEDICAL_THEME["primary"],
+        MEDICAL_THEME["secondary"],
+        MEDICAL_THEME["accent"],
+        MEDICAL_THEME["info"],
+    ]
+
     # Better label mapping for line charts
     line_label_map = {
         "total_interventions": "Total Interventions",
@@ -733,21 +854,21 @@ def create_line_chart(
         "avg_cost": "Average Cost ($)",
         "total_investment": "Total Investment ($)",
     }
-    
+
     for i, y_col in enumerate(y_cols):
         # Use specific mapping if available, otherwise use format function
         if y_col in line_label_map:
             label = line_label_map[y_col]
         else:
             label = format_column_label(y_col)
-        
+
         # Final safety check - ensure label is never empty or "Undefined"
         if not label or label.strip() == "" or label == "Undefined" or label.lower() == "undefined":
             # Fallback to manual formatting
             label = y_col.replace("_", " ").title()
             label = label.replace("Roi", "ROI")
             label = label.replace("Id", "ID")
-        
+
         fig.add_trace(
             go.Scatter(
                 x=df[x_col],
@@ -759,11 +880,10 @@ def create_line_chart(
                 hovertemplate=f"<b>{label}</b><br>%{{x}}<br>%{{y}}<extra></extra>",
             )
         )
-    
+
     # Format axis labels
-    x_axis_title = x_label or format_column_label(x_col) if x_label is None else x_label
-    y_axis_title = y_label or "Value" if y_label is None else y_label
-    
+    x_label or format_column_label(x_col) if x_label is None else x_label
+
     fig.update_layout(
         template="plotly_white",
         plot_bgcolor="#FFFFFF",
@@ -777,42 +897,42 @@ def create_line_chart(
             y=0.98,  # Position title higher
             yanchor="top",
             automargin=True,
-            pad=dict(t=0, b=10)  # Minimal padding
+            pad=dict(t=0, b=10),  # Minimal padding
         ),
         xaxis=dict(
-            gridcolor="#e0e0e0", 
+            gridcolor="#e0e0e0",
             title=None,  # Remove axis title text completely
             showticklabels=False,  # Hide tick labels (prevents overlap on mobile)
             showline=True,  # Show the axis line
             showgrid=True,  # Show grid lines
-            automargin=True
+            automargin=True,
         ),
         yaxis=dict(
-            gridcolor="#e0e0e0", 
+            gridcolor="#e0e0e0",
             title=None,  # Remove y-axis title text
             showticklabels=True,  # Keep y-axis numbers visible
             showline=True,  # Show the axis line
             showgrid=True,  # Show grid lines
-            automargin=True
+            automargin=True,
         ),
         hovermode="x unified",
         legend=dict(
-            orientation="h", 
-            yanchor="bottom", 
+            orientation="h",
+            yanchor="bottom",
             y=-0.15,  # Closer to chart now that x-axis labels are gone
-            xanchor="center", 
+            xanchor="center",
             x=0.5,
             title_text="",
             font=dict(size=11),
-            bgcolor='rgba(255,255,255,0.9)',
-            bordercolor='rgba(0,0,0,0.1)',
-            borderwidth=1
+            bgcolor="rgba(255,255,255,0.9)",
+            bordercolor="rgba(0,0,0,0.1)",
+            borderwidth=1,
         ),
         autosize=True,  # Make chart responsive for mobile
         height=350,  # Compact height for vertical compression
-        margin=dict(l=10, r=10, t=50, b=60)  # Mobile-friendly margins
+        margin=dict(l=10, r=10, t=50, b=60),  # Mobile-friendly margins
     )
-    
+
     # Explicitly update ALL trace names to ensure proper labels - FORCE update regardless of current state
     for i, trace in enumerate(fig.data):
         if i < len(y_cols):
@@ -826,27 +946,32 @@ def create_line_chart(
                 if not new_name or new_name == "Undefined" or new_name.lower() == "undefined":
                     new_name = y_col.replace("_", " ").title()
                     new_name = new_name.replace("Roi", "ROI").replace("Id", "ID")
-            
+
             # Force update - convert to string and strip any whitespace
             trace.name = str(new_name).strip()
-            
+
             # Also update hovertemplate to ensure it uses the correct name
-            if hasattr(trace, 'hovertemplate') and trace.hovertemplate:
+            if hasattr(trace, "hovertemplate") and trace.hovertemplate:
                 trace.hovertemplate = trace.hovertemplate.replace(trace.name or "", str(new_name))
-            if not hasattr(trace, 'hovertemplate') or not trace.hovertemplate:
+            if not hasattr(trace, "hovertemplate") or not trace.hovertemplate:
                 trace.hovertemplate = f"<b>{new_name}</b><br>%{{x}}<br>%{{y}}<extra></extra>"
-    
+
     # Final check - ensure NO trace has "Undefined" as name
     for trace in fig.data:
-        if not trace.name or str(trace.name).strip() == "" or str(trace.name).strip() == "Undefined" or str(trace.name).strip().lower() == "undefined":
+        if (
+            not trace.name
+            or str(trace.name).strip() == ""
+            or str(trace.name).strip() == "Undefined"
+            or str(trace.name).strip().lower() == "undefined"
+        ):
             trace.name = "Data Series"  # Safe fallback
-    
+
     # Final safety check: ensure height is always an integer, never None
-    if not hasattr(fig.layout, 'height') or fig.layout.height is None:
+    if not hasattr(fig.layout, "height") or fig.layout.height is None:
         fig.update_layout(height=350, autosize=True, margin=dict(l=10, r=10, t=50, b=60))
     elif not isinstance(fig.layout.height, int):
         fig.update_layout(height=350, autosize=True, margin=dict(l=10, r=10, t=50, b=60))
-    
+
     return fig
 
 
@@ -860,7 +985,7 @@ def create_waterfall_chart(
 ) -> go.Figure:
     """Create a waterfall-style variance chart."""
     fig = go.Figure()
-    
+
     # Add budget bars
     fig.add_trace(
         go.Bar(
@@ -872,7 +997,7 @@ def create_waterfall_chart(
             textposition="outside",
         )
     )
-    
+
     # Add actual bars
     fig.add_trace(
         go.Bar(
@@ -884,13 +1009,19 @@ def create_waterfall_chart(
             textposition="outside",
         )
     )
-    
+
     # Add variance indicator
     df_variance = df.copy()
     df_variance["variance_color"] = df_variance[variance_col].apply(
-        lambda x: MEDICAL_THEME["error"] if x > 0 else MEDICAL_THEME["success"] if x < 0 else MEDICAL_THEME["accent"]
+        lambda x: (
+            MEDICAL_THEME["error"]
+            if x > 0
+            else MEDICAL_THEME["success"]
+            if x < 0
+            else MEDICAL_THEME["accent"]
+        )
     )
-    
+
     fig.add_trace(
         go.Bar(
             name="Variance",
@@ -901,7 +1032,7 @@ def create_waterfall_chart(
             textposition="outside",
         )
     )
-    
+
     fig.update_layout(
         template="plotly_white",
         plot_bgcolor="#FFFFFF",
@@ -915,47 +1046,47 @@ def create_waterfall_chart(
             y=0.98,  # Position title higher
             yanchor="top",
             automargin=True,
-            pad=dict(t=0, b=10)  # Minimal padding
+            pad=dict(t=0, b=10),  # Minimal padding
         ),
         xaxis=dict(
-            gridcolor="#e0e0e0", 
+            gridcolor="#e0e0e0",
             title=None,  # Remove axis title text completely
             showticklabels=False,  # Hide tick labels (prevents overlap on mobile)
             showline=True,  # Show the axis line
             showgrid=True,  # Show grid lines
-            automargin=True
+            automargin=True,
         ),
         yaxis=dict(
-            gridcolor="#e0e0e0", 
+            gridcolor="#e0e0e0",
             title=None,  # Remove y-axis title text
             showticklabels=True,  # Keep y-axis numbers visible
             showline=True,  # Show the axis line
             showgrid=True,  # Show grid lines
-            automargin=True
+            automargin=True,
         ),
         barmode="group",
         hovermode="x unified",
         legend=dict(
-            orientation="h", 
-            yanchor="bottom", 
+            orientation="h",
+            yanchor="bottom",
             y=-0.15,  # Closer to chart now that x-axis labels are gone
-            xanchor="center", 
+            xanchor="center",
             x=0.5,
-            bgcolor='rgba(255,255,255,0.9)',
-            bordercolor='rgba(0,0,0,0.1)',
-            borderwidth=1
+            bgcolor="rgba(255,255,255,0.9)",
+            bordercolor="rgba(0,0,0,0.1)",
+            borderwidth=1,
         ),
         autosize=True,  # Make chart responsive for mobile
         height=350,  # Compact height for vertical compression
-        margin=dict(l=10, r=10, t=50, b=60)  # Mobile-friendly margins
+        margin=dict(l=10, r=10, t=50, b=60),  # Mobile-friendly margins
     )
-    
+
     # Final safety check: ensure height is always an integer, never None
-    if not hasattr(fig.layout, 'height') or fig.layout.height is None:
+    if not hasattr(fig.layout, "height") or fig.layout.height is None:
         fig.update_layout(height=350, autosize=True, margin=dict(l=10, r=10, t=50, b=60))
     elif not isinstance(fig.layout.height, int):
         fig.update_layout(height=350, autosize=True, margin=dict(l=10, r=10, t=50, b=60))
-    
+
     return fig
 
 
@@ -964,14 +1095,14 @@ def create_grouped_bar_chart(
     x_col: str,
     y_cols: list,
     title: str,
-    x_label: Optional[str] = None,
-    y_label: Optional[str] = None,
+    x_label: str | None = None,
+    y_label: str | None = None,
 ) -> go.Figure:
     """Create a grouped bar chart."""
     fig = go.Figure()
-    
+
     colors = [MEDICAL_THEME["primary"], MEDICAL_THEME["secondary"], MEDICAL_THEME["accent"]]
-    
+
     # Better label mapping for grouped bar charts
     bar_label_map = {
         "avg_cost": "Average Cost ($)",
@@ -981,27 +1112,31 @@ def create_grouped_bar_chart(
         "total_investment": "Total Investment ($)",
         "success_rate": "Success Rate (%)",
     }
-    
+
     for i, y_col in enumerate(y_cols):
         # Use specific mapping if available, otherwise use format function
         if y_col in bar_label_map:
             label = bar_label_map[y_col]
         else:
             label = format_column_label(y_col)
-        
+
         # Final safety check - ensure label is never empty or "Undefined"
         if not label or label.strip() == "" or label == "Undefined" or label.lower() == "undefined":
             # Fallback to manual formatting
             label = y_col.replace("_", " ").title()
             label = label.replace("Roi", "ROI")
             label = label.replace("Id", "ID")
-        
+
         # Format text based on column type
         if "cost" in y_col.lower() or "investment" in y_col.lower():
-            text_values = df[y_col].apply(lambda x: f"${x:,.0f}" if isinstance(x, (int, float)) else str(x))
+            text_values = df[y_col].apply(
+                lambda x: f"${x:,.0f}" if isinstance(x, (int, float)) else str(x)
+            )
         else:
-            text_values = df[y_col].apply(lambda x: f"{x:.1f}" if isinstance(x, (int, float)) else str(x))
-        
+            text_values = df[y_col].apply(
+                lambda x: f"{x:.1f}" if isinstance(x, (int, float)) else str(x)
+            )
+
         fig.add_trace(
             go.Bar(
                 name=str(label),  # Ensure it's a string
@@ -1013,11 +1148,10 @@ def create_grouped_bar_chart(
                 hovertemplate=f"<b>{label}</b><br>%{{x}}<br>%{{y}}<extra></extra>",
             )
         )
-    
+
     # Format axis labels
-    x_axis_title = x_label or format_column_label(x_col) if x_label is None else x_label
-    y_axis_title = y_label or "Value" if y_label is None else y_label
-    
+    x_label or format_column_label(x_col) if x_label is None else x_label
+
     fig.update_layout(
         template="plotly_white",
         plot_bgcolor="#FFFFFF",
@@ -1031,43 +1165,43 @@ def create_grouped_bar_chart(
             y=0.98,  # Position title higher
             yanchor="top",
             automargin=True,
-            pad=dict(t=0, b=10)  # Minimal padding
+            pad=dict(t=0, b=10),  # Minimal padding
         ),
         xaxis=dict(
-            gridcolor="#e0e0e0", 
+            gridcolor="#e0e0e0",
             title=None,  # Remove axis title text completely
             showticklabels=False,  # Hide tick labels (prevents overlap on mobile)
             showline=True,  # Show the axis line
             showgrid=True,  # Show grid lines
-            automargin=True
+            automargin=True,
         ),
         yaxis=dict(
-            gridcolor="#e0e0e0", 
+            gridcolor="#e0e0e0",
             title=None,  # Remove y-axis title text
             showticklabels=True,  # Keep y-axis numbers visible
             showline=True,  # Show the axis line
             showgrid=True,  # Show grid lines
-            automargin=True
+            automargin=True,
         ),
         barmode="group",
         hovermode="x unified",
         legend=dict(
-            orientation="h", 
-            yanchor="bottom", 
+            orientation="h",
+            yanchor="bottom",
             y=-0.15,  # Closer to chart now that x-axis labels are gone
-            xanchor="center", 
+            xanchor="center",
             x=0.5,
             title_text="",
             font=dict(size=11),
-            bgcolor='rgba(255,255,255,0.9)',
-            bordercolor='rgba(0,0,0,0.1)',
-            borderwidth=1
+            bgcolor="rgba(255,255,255,0.9)",
+            bordercolor="rgba(0,0,0,0.1)",
+            borderwidth=1,
         ),
         autosize=True,  # Make chart responsive for mobile
         height=350,  # Compact height for vertical compression
-        margin=dict(l=10, r=10, t=50, b=60)  # Mobile-friendly margins
+        margin=dict(l=10, r=10, t=50, b=60),  # Mobile-friendly margins
     )
-    
+
     # Explicitly update ALL trace names to ensure proper labels - FORCE update regardless of current state
     for i, trace in enumerate(fig.data):
         if i < len(y_cols):
@@ -1081,26 +1215,30 @@ def create_grouped_bar_chart(
                 if not new_name or new_name == "Undefined" or new_name.lower() == "undefined":
                     new_name = y_col.replace("_", " ").title()
                     new_name = new_name.replace("Roi", "ROI").replace("Id", "ID")
-            
+
             # Force update - convert to string and strip any whitespace
             trace.name = str(new_name).strip()
-            
+
             # Also update hovertemplate to ensure it uses the correct name
-            if hasattr(trace, 'hovertemplate') and trace.hovertemplate:
+            if hasattr(trace, "hovertemplate") and trace.hovertemplate:
                 trace.hovertemplate = trace.hovertemplate.replace(trace.name or "", str(new_name))
-            if not hasattr(trace, 'hovertemplate') or not trace.hovertemplate:
+            if not hasattr(trace, "hovertemplate") or not trace.hovertemplate:
                 trace.hovertemplate = f"<b>{new_name}</b><br>%{{x}}<br>%{{y}}<extra></extra>"
-    
+
     # Final check - ensure NO trace has "Undefined" as name
     for trace in fig.data:
-        if not trace.name or str(trace.name).strip() == "" or str(trace.name).strip() == "Undefined" or str(trace.name).strip().lower() == "undefined":
+        if (
+            not trace.name
+            or str(trace.name).strip() == ""
+            or str(trace.name).strip() == "Undefined"
+            or str(trace.name).strip().lower() == "undefined"
+        ):
             trace.name = "Data Series"  # Safe fallback
-    
+
     # Final safety check: ensure height is always an integer, never None
-    if not hasattr(fig.layout, 'height') or fig.layout.height is None:
+    if not hasattr(fig.layout, "height") or fig.layout.height is None:
         fig.update_layout(height=350, autosize=True, margin=dict(l=10, r=10, t=50, b=60))
     elif not isinstance(fig.layout.height, int):
         fig.update_layout(height=350, autosize=True, margin=dict(l=10, r=10, t=50, b=60))
-    
-    return fig
 
+    return fig

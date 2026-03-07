@@ -2,9 +2,11 @@
 Outreach Channel Optimization
 Phase 1 Week 1: Channel effectiveness and campaign recommendations.
 """
+
 from shiny import ui
 from shinywidgets import output_widget
-from modules.shared_ui import create_header, create_footer
+
+from modules.shared_ui import create_footer, create_header
 
 
 def channel_optimizer_content():

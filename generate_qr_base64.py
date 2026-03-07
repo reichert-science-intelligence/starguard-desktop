@@ -2,6 +2,7 @@
 Generate base64-encoded QR code for footer embedding.
 Use QR_-Landing.png if it exists, otherwise generate one for the demo URL.
 """
+
 import base64
 from pathlib import Path
 
@@ -14,8 +15,10 @@ if QR_PATH.exists():
     print("Using existing QR_-Landing.png")
 else:
     print("QR_-Landing.png not found. Generating QR code for demo URL...")
-    import qrcode
     import io
+
+    import qrcode
+
     qr = qrcode.QRCode(version=1, box_size=10, border=2)
     qr.add_data(DEMO_URL)
     qr.make(fit=True)

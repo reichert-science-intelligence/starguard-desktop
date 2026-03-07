@@ -11,67 +11,64 @@ HEDIS_CALCULATION_SCHEMA = {
         "measure_id": {
             "type": "string",
             "enum": [
-                "GSD", "KED", "EED", "PDC-DR", "BPD",
-                "CBP", "SUPD", "PDC-RASA", "PDC-STA",
-                "BCS", "COL", "HEI"
+                "GSD",
+                "KED",
+                "EED",
+                "PDC-DR",
+                "BPD",
+                "CBP",
+                "SUPD",
+                "PDC-RASA",
+                "PDC-STA",
+                "BCS",
+                "COL",
+                "HEI",
             ],
-            "description": "HEDIS measure code"
+            "description": "HEDIS measure code",
         },
         "numerator": {
             "type": "integer",
             "minimum": 0,
-            "description": "Members meeting measure criteria"
+            "description": "Members meeting measure criteria",
         },
-        "denominator": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "Eligible population"
-        },
+        "denominator": {"type": "integer", "minimum": 1, "description": "Eligible population"},
         "rate": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
-            "description": "Calculated rate (numerator/denominator)"
+            "description": "Calculated rate (numerator/denominator)",
         },
-        "exclusions_count": {
-            "type": "integer",
-            "minimum": 0
-        },
+        "exclusions_count": {"type": "integer", "minimum": 0},
         "data_quality_score": {
             "type": "number",
             "minimum": 0,
             "maximum": 1,
-            "description": "Confidence in data completeness"
+            "description": "Confidence in data completeness",
         },
         "sql_executed": {
             "type": "string",
-            "description": "The SQL query that produced this result"
+            "description": "The SQL query that produced this result",
         },
         "validation_status": {
             "type": "string",
-            "enum": ["golden_match", "within_tolerance", "needs_review"]
-        }
+            "enum": ["golden_match", "within_tolerance", "needs_review"],
+        },
     },
-    "required": ["measure_id", "numerator", "denominator", "rate", "sql_executed"]
+    "required": ["measure_id", "numerator", "denominator", "rate", "sql_executed"],
 }
 
 # Star Rating calculation output (for ROI/demo scenarios)
 STAR_RATING_SCHEMA = {
     "type": "object",
     "properties": {
-        "overall_rating": {
-            "type": "number",
-            "minimum": 1,
-            "maximum": 5,
-            "multipleOf": 0.5
-        },
+        "overall_rating": {"type": "number", "minimum": 1, "maximum": 5, "multipleOf": 0.5},
         "domain_scores": {
             "type": "object",
             "properties": {
                 "staying_healthy": {"type": "number"},
                 "managing_chronic": {"type": "number"},
-                "member_experience": {"type": "number"}
-            }
+                "member_experience": {"type": "number"},
+            },
         },
         "improvement_opportunities": {
             "type": "array",
@@ -82,14 +79,14 @@ STAR_RATING_SCHEMA = {
                     "current_rate": {"type": "number"},
                     "benchmark_50th": {"type": "number"},
                     "gap": {"type": "number"},
-                    "potential_points": {"type": "number"}
-                }
-            }
+                    "potential_points": {"type": "number"},
+                },
+            },
         },
         "projected_revenue_impact": {
             "type": "number",
-            "description": "Based on documented methodologies"
-        }
+            "description": "Based on documented methodologies",
+        },
     },
-    "required": ["overall_rating", "domain_scores", "improvement_opportunities"]
+    "required": ["overall_rating", "domain_scores", "improvement_opportunities"],
 }

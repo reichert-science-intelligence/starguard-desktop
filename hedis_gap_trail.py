@@ -7,24 +7,23 @@
 # Brand: Purple #4A3E8F | Gold #D4AF37 | Green #10b981
 # ─────────────────────────────────────────────────────────────
 
-import os
 import json
+import os
+from datetime import datetime, timedelta, timezone
+from typing import Any
+
 import gspread
 import pandas as pd
-from datetime import datetime, timezone, timedelta
-from typing import Any, Optional
 from google.oauth2.service_account import Credentials
 
 try:
     from supabase import create_client
+
     _SUPABASE_AVAILABLE = True
 except ImportError:
     _SUPABASE_AVAILABLE = False
 
-SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
-]
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
 
 # ── Sheet Column Schema ───────────────────────────────────────
 HEDIS_COLUMNS = [
@@ -34,36 +33,37 @@ HEDIS_COLUMNS = [
     "member_name",
     "measure_code",
     "measure_name",
-    "care_domain",          # Effectiveness | Access | Experience
-    "gap_status",           # OPEN | CLOSED | EXCLUDED
+    "care_domain",  # Effectiveness | Access | Experience
+    "gap_status",  # OPEN | CLOSED | EXCLUDED
     "due_date",
     "provider_name",
-    "intervention_type",    # Outreach | Clinical | Administrative
-    "star_impact",          # 1–5 weighting
+    "intervention_type",  # Outreach | Clinical | Administrative
+    "star_impact",  # 1–5 weighting
     "roi_estimate",
     "claude_recommendation",
-    "last_updated"
+    "last_updated",
 ]
 
 # ── Care Domain Map ───────────────────────────────────────────
 HEDIS_MEASURES = {
-    "CBP":  ("Controlling Blood Pressure",     "Effectiveness"),
-    "CDC":  ("Diabetes Care",                  "Effectiveness"),
-    "W34":  ("Well-Child Visits",              "Effectiveness"),
-    "AWC":  ("Annual Wellness Check",          "Effectiveness"),
-    "FUH":  ("Follow-Up After Hospitalization","Effectiveness"),
-    "PCE":  ("Pharmacotherapy for COPD",       "Effectiveness"),
-    "MPM":  ("Medication Management",          "Effectiveness"),
-    "COA":  ("Care of Older Adults",           "Effectiveness"),
-    "GSD":  ("Statin Use — Diabetes",          "Effectiveness"),
-    "BCS":  ("Breast Cancer Screening",        "Effectiveness"),
-    "COL":  ("Colorectal Cancer Screening",    "Effectiveness"),
+    "CBP": ("Controlling Blood Pressure", "Effectiveness"),
+    "CDC": ("Diabetes Care", "Effectiveness"),
+    "W34": ("Well-Child Visits", "Effectiveness"),
+    "AWC": ("Annual Wellness Check", "Effectiveness"),
+    "FUH": ("Follow-Up After Hospitalization", "Effectiveness"),
+    "PCE": ("Pharmacotherapy for COPD", "Effectiveness"),
+    "MPM": ("Medication Management", "Effectiveness"),
+    "COA": ("Care of Older Adults", "Effectiveness"),
+    "GSD": ("Statin Use — Diabetes", "Effectiveness"),
+    "BCS": ("Breast Cancer Screening", "Effectiveness"),
+    "COL": ("Colorectal Cancer Screening", "Effectiveness"),
 }
 
 
 # ─────────────────────────────────────────────────────────────
 # CONNECTION MANAGER
 # ─────────────────────────────────────────────────────────────
+
 
 class HedisGapDB:
     """
@@ -76,7 +76,7 @@ class HedisGapDB:
         self.client: Any = None
         self.sheet: Any = None
         self.connected: bool = False
-        self.last_error: Optional[str] = None
+        self.last_error: str | None = None
         self.record_count: int = 0
         self._connect()
 
@@ -97,9 +97,7 @@ class HedisGapDB:
                 )
 
             self.client = gspread.authorize(creds)
-            sheet_id = os.environ.get(
-                "HEDIS_SHEET_ID", "StarGuard_HEDIS_Gap_Tracker"
-            )
+            sheet_id = os.environ.get("HEDIS_SHEET_ID", "StarGuard_HEDIS_Gap_Tracker")
             try:
                 workbook = self.client.open(sheet_id)
             except gspread.SpreadsheetNotFound:
@@ -124,13 +122,14 @@ class HedisGapDB:
             "connected": self.connected,
             "error": self.last_error,
             "record_count": self.record_count,
-            "timestamp": datetime.now(timezone(timedelta(hours=-5))).strftime("%I:%M:%S %p EST")
+            "timestamp": datetime.now(timezone(timedelta(hours=-5))).strftime("%I:%M:%S %p EST"),
         }
 
 
 # ─────────────────────────────────────────────────────────────
 # HEDIS GAP OPERATIONS
 # ─────────────────────────────────────────────────────────────
+
 
 def push_hedis_gap(db: HedisGapDB, record: dict[str, Any]) -> dict[str, Any]:
     """
@@ -168,7 +167,7 @@ def push_hedis_gap(db: HedisGapDB, record: dict[str, Any]) -> dict[str, Any]:
             record.get("star_impact", 3),
             record.get("roi_estimate", 0.0),
             record.get("claude_recommendation", "")[:500],
-            now.strftime("%Y-%m-%d %H:%M:%S")
+            now.strftime("%Y-%m-%d %H:%M:%S"),
         ]
 
         db.sheet.append_row(row)
@@ -181,7 +180,7 @@ def push_hedis_gap(db: HedisGapDB, record: dict[str, Any]) -> dict[str, Any]:
             "success": True,
             "gap_id": gap_id,
             "timestamp": now.strftime("%I:%M:%S %p EST"),
-            "measure_name": measure_name
+            "measure_name": measure_name,
         }
 
     except Exception as e:
@@ -197,23 +196,25 @@ def _push_gap_to_supabase(row: list[Any]) -> None:
         return
     try:
         client = create_client(url, key)
-        client.table("hedis_gap_trail").insert({
-            "gap_id": row[0],
-            "timestamp": row[1],
-            "member_id": row[2],
-            "member_name": row[3],
-            "measure_code": row[4],
-            "measure_name": row[5],
-            "care_domain": row[6],
-            "gap_status": row[7],
-            "due_date": row[8],
-            "provider_name": row[9],
-            "intervention_type": row[10],
-            "star_impact": row[11],
-            "roi_estimate": row[12],
-            "claude_recommendation": row[13],
-            "last_updated": row[14],
-        }).execute()
+        client.table("hedis_gap_trail").insert(
+            {
+                "gap_id": row[0],
+                "timestamp": row[1],
+                "member_id": row[2],
+                "member_name": row[3],
+                "measure_code": row[4],
+                "measure_name": row[5],
+                "care_domain": row[6],
+                "gap_status": row[7],
+                "due_date": row[8],
+                "provider_name": row[9],
+                "intervention_type": row[10],
+                "star_impact": row[11],
+                "roi_estimate": row[12],
+                "claude_recommendation": row[13],
+                "last_updated": row[14],
+            }
+        ).execute()
     except Exception:
         pass  # non-blocking; Sheets is source of truth
 
@@ -224,9 +225,9 @@ def _push_gap_to_supabase(row: list[Any]) -> None:
 
 _SUPPRESSION_FILE = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
-    os.environ.get("GAP_SUPPRESSION_FILE", ".gap_suppressions.json")
+    os.environ.get("GAP_SUPPRESSION_FILE", ".gap_suppressions.json"),
 )
-_GAP_SUPPRESSIONS_CACHE: Optional[list[dict[str, Any]]] = None
+_GAP_SUPPRESSIONS_CACHE: list[dict[str, Any]] | None = None
 
 
 def _load_gap_suppressions() -> list[dict[str, Any]]:
@@ -234,7 +235,7 @@ def _load_gap_suppressions() -> list[dict[str, Any]]:
     global _GAP_SUPPRESSIONS_CACHE
     if os.path.exists(_SUPPRESSION_FILE):
         try:
-            with open(_SUPPRESSION_FILE, "r", encoding="utf-8") as f:
+            with open(_SUPPRESSION_FILE, encoding="utf-8") as f:
                 _GAP_SUPPRESSIONS_CACHE = json.load(f)
         except Exception:
             _GAP_SUPPRESSIONS_CACHE = []
@@ -264,11 +265,13 @@ def add_gap_suppression(gap_id: str, reason: str = "") -> dict[str, Any]:
     rules = _load_gap_suppressions()
     if any(r.get("gap_id") == gap_id for r in rules):
         return {"success": False, "error": "Already suppressed"}
-    rules.append({
-        "gap_id": gap_id,
-        "reason": reason or "Manual suppression",
-        "created": datetime.now(timezone(timedelta(hours=-5))).isoformat()
-    })
+    rules.append(
+        {
+            "gap_id": gap_id,
+            "reason": reason or "Manual suppression",
+            "created": datetime.now(timezone(timedelta(hours=-5))).isoformat(),
+        }
+    )
     _save_gap_suppressions(rules)
     return {"success": True, "gap_id": gap_id}
 
@@ -291,10 +294,7 @@ def apply_gap_suppression_filter(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def fetch_hedis_gaps(
-    db: HedisGapDB,
-    n: int = 15,
-    filter_status: str = "ALL",
-    filter_measure: str = "ALL"
+    db: HedisGapDB, n: int = 15, filter_status: str = "ALL", filter_measure: str = "ALL"
 ) -> pd.DataFrame:
     """
     Pull gap records with optional filters.
@@ -319,9 +319,15 @@ def fetch_hedis_gaps(
         df = df.sort_values("timestamp", ascending=False).head(n)
 
         display_cols = [
-            "gap_id", "member_id", "measure_code", "measure_name",
-            "gap_status", "due_date", "star_impact",
-            "roi_estimate", "intervention_type"
+            "gap_id",
+            "member_id",
+            "measure_code",
+            "measure_name",
+            "gap_status",
+            "due_date",
+            "star_impact",
+            "roi_estimate",
+            "intervention_type",
         ]
         available = [c for c in display_cols if c in df.columns]
         out = df[available].reset_index(drop=True)
@@ -339,26 +345,20 @@ def fetch_gap_summary(db: HedisGapDB) -> dict[str, Any]:
     Returns: { total, open, closed, avg_star_impact, total_roi }
     """
     if not db.connected:
-        return {"total": 0, "open": 0, "closed": 0,
-                "avg_star_impact": 0.0, "total_roi": 0.0}
+        return {"total": 0, "open": 0, "closed": 0, "avg_star_impact": 0.0, "total_roi": 0.0}
     assert db.sheet is not None
     try:
         records = db.sheet.get_all_records()
         df = pd.DataFrame(records)
         if df.empty:
-            return {"total": 0, "open": 0, "closed": 0,
-                    "avg_star_impact": 0.0, "total_roi": 0.0}
+            return {"total": 0, "open": 0, "closed": 0, "avg_star_impact": 0.0, "total_roi": 0.0}
 
         return {
             "total": len(df),
             "open": len(df[df["gap_status"] == "OPEN"]),
             "closed": len(df[df["gap_status"] == "CLOSED"]),
-            "avg_star_impact": round(
-                pd.to_numeric(df["star_impact"], errors="coerce").mean(), 2
-            ),
-            "total_roi": round(
-                pd.to_numeric(df["roi_estimate"], errors="coerce").sum(), 0
-            )
+            "avg_star_impact": round(pd.to_numeric(df["star_impact"], errors="coerce").mean(), 2),
+            "total_roi": round(pd.to_numeric(df["roi_estimate"], errors="coerce").sum(), 0),
         }
     except Exception as e:
         return {"error": str(e)}
@@ -374,13 +374,10 @@ def close_hedis_gap(db: HedisGapDB, gap_id: str) -> dict[str, Any]:
         if not cell:
             return {"success": False, "error": f"{gap_id} not found"}
 
-        status_col  = HEDIS_COLUMNS.index("gap_status") + 1
+        status_col = HEDIS_COLUMNS.index("gap_status") + 1
         updated_col = HEDIS_COLUMNS.index("last_updated") + 1
         db.sheet.update_cell(cell.row, status_col, "CLOSED")
-        db.sheet.update_cell(
-            cell.row, updated_col,
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        )
+        db.sheet.update_cell(cell.row, updated_col, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         return {"success": True, "gap_id": gap_id, "status": "CLOSED"}
     except Exception as e:
         return {"success": False, "error": str(e)}

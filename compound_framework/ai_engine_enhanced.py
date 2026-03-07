@@ -3,12 +3,14 @@ Compound Framework - Day 8-10: Self-Correction Layer
 
 Triple-loop verification: Generate → Validate against golden → Self-correct if mismatch.
 """
+
 import os
-import pandas as pd
 from pathlib import Path
 
-from .session_context import SessionLearningContext
+import pandas as pd
+
 from .hedis_schemas import HEDIS_CALCULATION_SCHEMA
+from .session_context import SessionLearningContext
 
 # Initialize
 session_memory = SessionLearningContext()
@@ -25,6 +27,7 @@ def _get_client():
     global _client
     if _client is None:
         import anthropic
+
         _client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
     return _client
 
@@ -78,8 +81,8 @@ Required tool response fields:
 - data_quality_score: Confidence in data quality (0.0 to 1.0)
 
 Additional context:
-- Measure ID: {measure_id or 'Not specified'}
-- Plan ID: {plan_id or 'Not specified'}
+- Measure ID: {measure_id or "Not specified"}
+- Plan ID: {plan_id or "Not specified"}
 - Measurement year: 2024
 - Apply PHI-safe rules (no member-level identifiers)
 """
@@ -179,14 +182,14 @@ Golden dataset rate: {expected_rate:.4f}
 Difference: {rate_diff:.4f} (tolerance: {tolerance})
 
 Your SQL approach:
-{result.get('sql_executed', 'Not provided')}
+{result.get("sql_executed", "Not provided")}
 
 Expected approach (from golden dataset):
-{golden_row.get('sql_query', 'Not provided')}
+{golden_row.get("sql_query", "Not provided")}
 
 Measure details:
-- Measure: {measure_id} ({golden_row.get('measure_name', 'N/A')})
-- Measurement year: {golden_row.get('measurement_year', 'N/A')}
+- Measure: {measure_id} ({golden_row.get("measure_name", "N/A")})
+- Measurement year: {golden_row.get("measurement_year", "N/A")}
 
 Identify the discrepancy and regenerate with correct logic.
 Common issues to check:
@@ -228,9 +231,7 @@ Common issues to check:
     return result
 
 
-def differential_solution_engine(
-    problem: str, measure_id: str, plan_id: str = None
-) -> dict:
+def differential_solution_engine(problem: str, measure_id: str, plan_id: str = None) -> dict:
     """
     Generate and compare 3 different approaches to the same calculation.
 
@@ -269,13 +270,13 @@ def differential_solution_engine(
         full_prompt = f"""
 {problem}
 
-APPROACH REQUIREMENT: {approach['instruction']}
+APPROACH REQUIREMENT: {approach["instruction"]}
 
 CRITICAL: You MUST use the 'hedis_calculator' tool to return structured results.
 
 Context:
 - Measure: {measure_id}
-- Plan: {plan_id or 'Not specified'}
+- Plan: {plan_id or "Not specified"}
 - Follow HEDIS technical specifications
 - PHI-safe (no member identifiers)
 
@@ -288,15 +289,17 @@ Return using the hedis_calculator tool with all required fields.
             result["approach_instruction"] = approach["instruction"]
             solutions.append(result)
         except Exception as e:
-            solutions.append({
-                "error": True,
-                "error_type": type(e).__name__,
-                "error_message": str(e),
-                "user_message": f"Approach {i} failed: {str(e)}",
-                "approach_number": i,
-                "approach_name": approach["name"],
-                "approach_instruction": approach["instruction"],
-            })
+            solutions.append(
+                {
+                    "error": True,
+                    "error_type": type(e).__name__,
+                    "error_message": str(e),
+                    "user_message": f"Approach {i} failed: {str(e)}",
+                    "approach_number": i,
+                    "approach_name": approach["name"],
+                    "approach_instruction": approach["instruction"],
+                }
+            )
 
     # Filter valid solutions for comparison
     valid_solutions = [s for s in solutions if not s.get("error")]
@@ -319,13 +322,13 @@ Return using the hedis_calculator tool with all required fields.
     for i, sol in enumerate(valid_solutions, 1):
         rate = sol.get("rate", 0)
         comparison_prompt += f"""
-**Solution {i} ({sol.get('approach_name', 'Unknown')}):**
+**Solution {i} ({sol.get("approach_name", "Unknown")}):**
 - Rate: {rate:.4f} ({rate:.2%})
-- Numerator: {sol.get('numerator', 0):,}
-- Denominator: {sol.get('denominator', 0):,}
-- Validation: {sol.get('validation_status', 'N/A')}
-- Loops executed: {sol.get('loops_executed', 1)}
-- SQL preview: {str(sol.get('sql_executed', 'N/A'))[:150]}...
+- Numerator: {sol.get("numerator", 0):,}
+- Denominator: {sol.get("denominator", 0):,}
+- Validation: {sol.get("validation_status", "N/A")}
+- Loops executed: {sol.get("loops_executed", 1)}
+- SQL preview: {str(sol.get("sql_executed", "N/A"))[:150]}...
 
 """
     comparison_prompt += """

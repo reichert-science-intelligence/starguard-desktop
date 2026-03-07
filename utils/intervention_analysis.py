@@ -2,11 +2,13 @@
 Intervention Analysis
 Financial impact per intervention and portfolio optimization for quality budgets
 """
-from typing import Dict, List, Optional, Any
+
+from typing import Any
 
 try:
     from utils.measure_definitions import get_measure_definition
 except ImportError:
+
     def get_measure_definition(measure_id: str):
         return None
 
@@ -32,13 +34,17 @@ def calculate_intervention_roi(
     member_count: int,
     revenue_per_closure: float = 100.0,
     quality_bonus_per_member_per_star: float = DEFAULT_QUALITY_BONUS_PER_STAR,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Calculate ROI for a specific intervention."""
     if intervention_cost <= 0 or member_count <= 0:
         return {
             "cost_per_closure": 0.0,
             "expected_rate_improvement": expected_gap_closure,
-            "financial_impact": {"total": 0.0, "revenue_from_closures": 0.0, "star_rating_bonus": 0.0},
+            "financial_impact": {
+                "total": 0.0,
+                "revenue_from_closures": 0.0,
+                "star_rating_bonus": 0.0,
+            },
             "roi_ratio": 0.0,
             "confidence_score": 0.0,
             "star_rating_bonus_impact": 0.0,
@@ -82,25 +88,89 @@ def calculate_intervention_roi(
     }
 
 
-def get_default_interventions() -> List[Dict[str, Any]]:
+def get_default_interventions() -> list[dict[str, Any]]:
     """Default set of available interventions for portfolio optimization."""
     return [
-        {"id": "outreach_bcs", "intervention_type": "Member Outreach Campaign", "target_measure": "BCS", "expected_gap_closure": 8.0, "intervention_cost": 15000.0, "member_count": 2000, "star_weight": 0.10},
-        {"id": "provider_diabetes", "intervention_type": "Provider Education", "target_measure": "CDC", "expected_gap_closure": 12.0, "intervention_cost": 25000.0, "member_count": 3000, "star_weight": 0.15},
-        {"id": "ehr_cbp", "intervention_type": "EHR Alert System", "target_measure": "CBP", "expected_gap_closure": 15.0, "intervention_cost": 50000.0, "member_count": 4000, "star_weight": 0.12},
-        {"id": "outreach_col", "intervention_type": "Member Outreach Campaign", "target_measure": "COL", "expected_gap_closure": 6.0, "intervention_cost": 12000.0, "member_count": 2500, "star_weight": 0.10},
-        {"id": "lab_reminder", "intervention_type": "Lab Order Reminders", "target_measure": "CDC", "expected_gap_closure": 10.0, "intervention_cost": 18000.0, "member_count": 3000, "star_weight": 0.15},
-        {"id": "bp_home", "intervention_type": "Home BP Monitoring", "target_measure": "CBP", "expected_gap_closure": 9.0, "intervention_cost": 22000.0, "member_count": 4000, "star_weight": 0.12},
-        {"id": "mam_outreach", "intervention_type": "Mammography Outreach", "target_measure": "MAM", "expected_gap_closure": 7.0, "intervention_cost": 14000.0, "member_count": 1800, "star_weight": 0.10},
-        {"id": "eye_exam", "intervention_type": "Eye Exam Reminders", "target_measure": "EED", "expected_gap_closure": 11.0, "intervention_cost": 20000.0, "member_count": 2500, "star_weight": 0.15},
+        {
+            "id": "outreach_bcs",
+            "intervention_type": "Member Outreach Campaign",
+            "target_measure": "BCS",
+            "expected_gap_closure": 8.0,
+            "intervention_cost": 15000.0,
+            "member_count": 2000,
+            "star_weight": 0.10,
+        },
+        {
+            "id": "provider_diabetes",
+            "intervention_type": "Provider Education",
+            "target_measure": "CDC",
+            "expected_gap_closure": 12.0,
+            "intervention_cost": 25000.0,
+            "member_count": 3000,
+            "star_weight": 0.15,
+        },
+        {
+            "id": "ehr_cbp",
+            "intervention_type": "EHR Alert System",
+            "target_measure": "CBP",
+            "expected_gap_closure": 15.0,
+            "intervention_cost": 50000.0,
+            "member_count": 4000,
+            "star_weight": 0.12,
+        },
+        {
+            "id": "outreach_col",
+            "intervention_type": "Member Outreach Campaign",
+            "target_measure": "COL",
+            "expected_gap_closure": 6.0,
+            "intervention_cost": 12000.0,
+            "member_count": 2500,
+            "star_weight": 0.10,
+        },
+        {
+            "id": "lab_reminder",
+            "intervention_type": "Lab Order Reminders",
+            "target_measure": "CDC",
+            "expected_gap_closure": 10.0,
+            "intervention_cost": 18000.0,
+            "member_count": 3000,
+            "star_weight": 0.15,
+        },
+        {
+            "id": "bp_home",
+            "intervention_type": "Home BP Monitoring",
+            "target_measure": "CBP",
+            "expected_gap_closure": 9.0,
+            "intervention_cost": 22000.0,
+            "member_count": 4000,
+            "star_weight": 0.12,
+        },
+        {
+            "id": "mam_outreach",
+            "intervention_type": "Mammography Outreach",
+            "target_measure": "MAM",
+            "expected_gap_closure": 7.0,
+            "intervention_cost": 14000.0,
+            "member_count": 1800,
+            "star_weight": 0.10,
+        },
+        {
+            "id": "eye_exam",
+            "intervention_type": "Eye Exam Reminders",
+            "target_measure": "EED",
+            "expected_gap_closure": 11.0,
+            "intervention_cost": 20000.0,
+            "member_count": 2500,
+            "star_weight": 0.15,
+        },
     ]
 
 
 def optimize_intervention_portfolio(
     budget: float,
-    available_interventions: Optional[List[Dict]] = None,
-    constraints: Optional[Dict] = None,
-) -> Dict[str, Any]:
+    available_interventions: list[dict] | None = None,
+    constraints: dict | None = None,
+) -> dict[str, Any]:
     """Given a budget, return three approaches: max_star, max_roi, balanced."""
     constraints = constraints or {}
     interventions = available_interventions or get_default_interventions()
@@ -114,16 +184,18 @@ def optimize_intervention_portfolio(
             intervention_cost=i["intervention_cost"],
             member_count=i["member_count"],
         )
-        computed.append({
-            **i,
-            "roi_ratio": roi["roi_ratio"],
-            "net_roi": roi["net_roi"],
-            "financial_impact_total": roi["financial_impact"]["total"],
-            "star_rating_bonus": roi["star_rating_bonus_impact"],
-            "confidence_score": roi["confidence_score"],
-        })
+        computed.append(
+            {
+                **i,
+                "roi_ratio": roi["roi_ratio"],
+                "net_roi": roi["net_roi"],
+                "financial_impact_total": roi["financial_impact"]["total"],
+                "star_rating_bonus": roi["star_rating_bonus_impact"],
+                "confidence_score": roi["confidence_score"],
+            }
+        )
 
-    def select_by_budget(items: List[Dict], sort_key: str, budget_limit: float) -> List[Dict]:
+    def select_by_budget(items: list[dict], sort_key: str, budget_limit: float) -> list[dict]:
         selected = []
         remaining = budget_limit
         for item in sorted(items, key=lambda x: -x.get(sort_key, 0)):
@@ -133,7 +205,15 @@ def optimize_intervention_portfolio(
                 remaining -= cost
         return selected
 
-    by_star = sorted(computed, key=lambda x: -(x.get("star_rating_bonus", 0) or x.get("star_weight", 0) * x["financial_impact_total"]))
+    by_star = sorted(
+        computed,
+        key=lambda x: (
+            -(
+                x.get("star_rating_bonus", 0)
+                or x.get("star_weight", 0) * x["financial_impact_total"]
+            )
+        ),
+    )
     selected_star = select_by_budget(by_star, "star_rating_bonus", budget)
     by_roi = sorted(computed, key=lambda x: -x["roi_ratio"])
     selected_roi = select_by_budget(by_roi, "roi_ratio", budget)
@@ -142,14 +222,16 @@ def optimize_intervention_portfolio(
     combined = list({c["id"]: c for c in quick_wins + strategic}.values())
     selected_balanced = []
     remaining = budget
+
     def _balanced_key(x):
         return (-x["roi_ratio"], -(x.get("star_rating_bonus") or 0))
+
     for item in sorted(combined, key=_balanced_key):
         if item["intervention_cost"] <= remaining and item["intervention_cost"] > 0:
             selected_balanced.append(item)
             remaining -= item["intervention_cost"]
 
-    def sum_selected(sel: List[Dict]) -> Dict:
+    def sum_selected(sel: list[dict]) -> dict:
         total_cost = sum(s["intervention_cost"] for s in sel)
         total_impact = sum(s["financial_impact_total"] for s in sel)
         total_star = sum(s["star_rating_bonus"] for s in sel)

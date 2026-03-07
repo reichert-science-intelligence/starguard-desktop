@@ -39,6 +39,16 @@ line-length = 100
 select = ["E", "F", "I", "N", "W", "UP"]
 ignore = ["E501"]
 
+[tool.ruff.per-file-ignores]
+"app.py" = ["E402"]
+"utils/queries.py" = ["W291", "W293"]
+"utils/data_helpers.py" = ["E722"]
+"compound_framework/financial_impact.py" = ["N806"]
+"diagnose_sidebar.py" = ["E402"]
+"intervention_optimizer.py" = ["E731"]
+"modules/shared_ui.py" = ["W293"]
+"utils/charts.py" = ["E722"]  # Bare except for Plotly fallbacks
+
 [tool.ruff.isort]
 known-first-party = ["app", "hedis_gap_trail", "cloud_status_badge", "hitl_admin_view", "suppression_banner", "intervention_optimizer"]
 

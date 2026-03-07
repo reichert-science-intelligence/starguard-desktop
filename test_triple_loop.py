@@ -5,6 +5,7 @@ Run from starguard-shiny directory:
     set ANTHROPIC_API_KEY=your-key-here
     python test_triple_loop.py
 """
+
 import os
 import sys
 
@@ -16,8 +17,8 @@ if not os.environ.get("ANTHROPIC_API_KEY"):
     sys.exit(1)
 
 from compound_framework.ai_engine_enhanced import (
-    triple_loop_execution,
     differential_solution_engine,
+    triple_loop_execution,
 )
 
 print("=" * 60)
@@ -59,8 +60,12 @@ diff_results = differential_solution_engine(
 
 print(f"\n✓ Generated {len(diff_results['solutions'])} solutions")
 print(f"✓ Best solution: #{diff_results['best_solution_index'] + 1}")
-print(f"\n{'='*60}")
+print(f"\n{'=' * 60}")
 print("RECOMMENDATION:")
-print(diff_results["recommendation"][:800] + "..." if len(diff_results["recommendation"]) > 800 else diff_results["recommendation"])
+print(
+    diff_results["recommendation"][:800] + "..."
+    if len(diff_results["recommendation"]) > 800
+    else diff_results["recommendation"]
+)
 
 print("\n✓ ALL TESTS COMPLETED")

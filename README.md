@@ -9,6 +9,8 @@ pinned: false
 ---
 
 [![CI](https://github.com/reichert-science-intelligence/starguard-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/reichert-science-intelligence/starguard-desktop/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/)
+[![Tests](https://img.shields.io/badge/tests-17%20passed-brightgreen)](https://github.com/reichert-science-intelligence/starguard-desktop/actions)
 
 # ⭐ StarGuard Desktop
 ### Medicare Advantage Intelligence Platform — Desktop Edition

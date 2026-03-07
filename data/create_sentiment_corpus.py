@@ -3,11 +3,12 @@ Create synthetic sentiment corpus for CAHPS measure prediction.
 Run: python -m data.create_sentiment_corpus
 Output: data/sentiment_corpus.csv
 """
-import pandas as pd
-import numpy as np
+
 import random
 from datetime import datetime, timedelta
 from pathlib import Path
+
+import pandas as pd
 
 SENTIMENT_SCENARIOS = {
     "Getting Care Quickly": [
@@ -57,16 +58,18 @@ def generate_sentiment_data(n_records: int = 1000) -> pd.DataFrame:
         days_offset = random.randint(0, 90)
         call_date = start_date + timedelta(days=days_offset)
 
-        records.append({
-            "member_id": member_id,
-            "call_date": call_date.isoformat(),
-            "cahps_category": cahps_category,
-            "transcript": transcript,
-            "sentiment_score": round(sentiment_score, 3),
-            "predicted_cahps_rating": predicted_cahps,
-            "call_duration_seconds": random.randint(120, 1800),
-            "agent_id": f"AGT{random.randint(100, 999)}",
-        })
+        records.append(
+            {
+                "member_id": member_id,
+                "call_date": call_date.isoformat(),
+                "cahps_category": cahps_category,
+                "transcript": transcript,
+                "sentiment_score": round(sentiment_score, 3),
+                "predicted_cahps_rating": predicted_cahps,
+                "call_duration_seconds": random.randint(120, 1800),
+                "agent_id": f"AGT{random.randint(100, 999)}",
+            }
+        )
 
     return pd.DataFrame(records)
 

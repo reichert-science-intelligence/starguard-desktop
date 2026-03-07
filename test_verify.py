@@ -3,8 +3,10 @@
 StarGuard AI Mobile — pre-deploy verification.
 Checks that key files and mobile/compound features exist.
 """
+
 import os
 import sys
+
 
 def main():
     base = os.path.dirname(os.path.abspath(__file__))
@@ -15,7 +17,7 @@ def main():
     app_py = os.path.join(base, "app.py")
     if os.path.isfile(app_py):
         checks.append("app.py present")
-        with open(app_py, "r", encoding="utf-8", errors="ignore") as f:
+        with open(app_py, encoding="utf-8", errors="ignore") as f:
             content = f.read()
         if "viewport" in content or "viewport-fit" in content:
             checks.append("viewport meta in app")
@@ -28,7 +30,7 @@ def main():
     css = os.path.join(base, "www", "styles.css")
     if os.path.isfile(css):
         checks.append("www/styles.css present")
-        with open(css, "r", encoding="utf-8", errors="ignore") as f:
+        with open(css, encoding="utf-8", errors="ignore") as f:
             css_content = f.read()
         if "44px" in css_content or "min-height: 44px" in css_content:
             checks.append("Touch target (44px) in CSS")
@@ -48,7 +50,7 @@ def main():
     shared = os.path.join(base, "modules", "shared_ui.py")
     if os.path.isfile(shared):
         checks.append("modules/shared_ui.py present")
-        with open(shared, "r", encoding="utf-8", errors="ignore") as f:
+        with open(shared, encoding="utf-8", errors="ignore") as f:
             su = f.read()
         if "create_header" in su and "create_footer" in su:
             checks.append("shared_ui: create_header, create_footer present")
@@ -73,6 +75,7 @@ def main():
         sys.exit(1)
     print("\nAll checks passed. Ready for deploy.")
     sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

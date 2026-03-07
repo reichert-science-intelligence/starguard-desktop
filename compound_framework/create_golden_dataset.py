@@ -4,9 +4,11 @@ Compound Framework - Day 1-2: Extract Golden Dataset
 Extract validated HEDIS results from plan_performance table.
 Falls back to synthetic examples if plan_performance doesn't exist (e.g., Phase 4 SQLite schema).
 """
-import pandas as pd
+
 import os
 from pathlib import Path
+
+import pandas as pd
 
 # Allow importing from starguard-shiny when run as script
 _SCRIPT_DIR = Path(__file__).resolve().parent
@@ -19,8 +21,18 @@ _OUTPUT_PATH = _SCRIPT_DIR / "golden_dataset.csv"
 # Plan ID from env or default (Phase 1 uses H1234, H5678, etc.)
 PLAN_ID = os.environ.get("GOLDEN_PLAN_ID", "H1234")
 MEASURE_IDS = [
-    "GSD", "KED", "CBP", "BCS", "COL", "EED",
-    "PDC-DR", "BPD", "SUPD", "PDC-RASA", "PDC-STA", "HEI",
+    "GSD",
+    "KED",
+    "CBP",
+    "BCS",
+    "COL",
+    "EED",
+    "PDC-DR",
+    "BPD",
+    "SUPD",
+    "PDC-RASA",
+    "PDC-STA",
+    "HEI",
 ]
 
 SQL_QUERY_DESCRIPTIONS = {
@@ -65,8 +77,12 @@ def _get_synthetic_examples() -> pd.DataFrame:
         golden_examples["expected_rate"].append(rate)
         golden_examples["measurement_year"].append(2024)
         golden_examples["measure_name"].append(name)
-        golden_examples["sql_query"].append(SQL_QUERY_DESCRIPTIONS.get(mid, "See phase_1_2_3_sql documentation"))
-        golden_examples["validation_notes"].append(f"Validated against CMS 2024 benchmarks (synthetic)")
+        golden_examples["sql_query"].append(
+            SQL_QUERY_DESCRIPTIONS.get(mid, "See phase_1_2_3_sql documentation")
+        )
+        golden_examples["validation_notes"].append(
+            "Validated against CMS 2024 benchmarks (synthetic)"
+        )
     return pd.DataFrame(golden_examples)
 
 
@@ -130,6 +146,8 @@ def extract_golden_dataset() -> pd.DataFrame:
 if __name__ == "__main__":
     df = extract_golden_dataset()
     print("\nSample data:")
-    cols = [c for c in ["measure_id", "numerator", "denominator", "expected_rate"] if c in df.columns]
+    cols = [
+        c for c in ["measure_id", "numerator", "denominator", "expected_rate"] if c in df.columns
+    ]
     if cols:
         print(df[cols].head())

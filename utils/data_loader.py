@@ -2,11 +2,11 @@
 Data loader for HEDIS Portfolio Optimizer Phase 1 enhancements.
 Loads sentiment corpus, SDoH mapping, and member data (DB or synthetic).
 """
-from pathlib import Path
-from typing import Optional
 
-import pandas as pd
+from pathlib import Path
+
 import numpy as np
+import pandas as pd
 
 # Base path for data files
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -68,7 +68,11 @@ def load_member_data_for_outreach() -> pd.DataFrame:
     # Fallback: synthetic member data
     np.random.seed(42)
     sdoh = load_sdoh_mapping()
-    zip_codes = sdoh["zip_code"].tolist() if not sdoh.empty else [f"{np.random.randint(10001, 99999)}" for _ in range(200)]
+    zip_codes = (
+        sdoh["zip_code"].tolist()
+        if not sdoh.empty
+        else [f"{np.random.randint(10001, 99999)}" for _ in range(200)]
+    )
 
     n_members = min(300, len(zip_codes) * 2)
     member_ids = [f"MEM{10000 + i}" for i in range(n_members)]
@@ -78,14 +82,16 @@ def load_member_data_for_outreach() -> pd.DataFrame:
     tech_savvy = np.random.uniform(0.2, 0.95, n_members)
     email_on_file = np.random.choice([True, False], n_members, p=[0.6, 0.4])
 
-    df = pd.DataFrame({
-        "member_id": member_ids,
-        "zip_code": zips,
-        "age": ages,
-        "hedis_gap_count": gap_counts,
-        "tech_savvy_score": tech_savvy,
-        "email_on_file": email_on_file,
-    })
+    df = pd.DataFrame(
+        {
+            "member_id": member_ids,
+            "zip_code": zips,
+            "age": ages,
+            "hedis_gap_count": gap_counts,
+            "tech_savvy_score": tech_savvy,
+            "email_on_file": email_on_file,
+        }
+    )
     return df
 
 
@@ -96,8 +102,12 @@ def get_merged_member_sdoh() -> pd.DataFrame:
     if members.empty or sdoh.empty:
         return members
 
-    merged = members.merge(sdoh[["zip_code", "primary_barrier", "transit_access_score", "food_desert_score"]],
-                           on="zip_code", how="left", suffixes=("", "_sdoh"))
+    merged = members.merge(
+        sdoh[["zip_code", "primary_barrier", "transit_access_score", "food_desert_score"]],
+        on="zip_code",
+        how="left",
+        suffixes=("", "_sdoh"),
+    )
     merged["primary_barrier"] = merged["primary_barrier"].fillna("None")
     merged["has_transport_barrier"] = merged["transit_access_score"] < 5
     merged["has_food_barrier"] = merged["food_desert_score"] > 6

@@ -4,6 +4,7 @@ Formatting utilities for consistent number display across StarGuard AI
 Provides thousands separators, currency, percentages, and ratio formatting
 """
 
+
 def format_number(value, decimals=0, prefix="", suffix=""):
     """
     Format number with thousands separator and optional prefix/suffix.
@@ -199,6 +200,7 @@ def format_confidence_score(value, decimals=0):
 
 
 # Convenience functions for common StarGuard AI metrics
+
 
 def format_percent(value, decimals=1):
     """
