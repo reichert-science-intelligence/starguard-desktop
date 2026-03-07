@@ -8,6 +8,8 @@ app_file: app.py
 pinned: false
 ---
 
+[![CI](https://github.com/reichert-science-intelligence/starguard-desktop/actions/workflows/ci.yml/badge.svg)](https://github.com/reichert-science-intelligence/starguard-desktop/actions/workflows/ci.yml)
+
 # ⭐ StarGuard Desktop
 ### Medicare Advantage Intelligence Platform — Desktop Edition
 **Robert Reichert | Healthcare Data Scientist & AI Architect**
