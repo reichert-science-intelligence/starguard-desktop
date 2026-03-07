@@ -1576,6 +1576,8 @@ SIDEBAR_NAV_HTML = """
 <div class="sg-nav-link sidebar-link" data-nav="data_quality">✔️ Data Quality</div>
 <div class="sg-nav-link sidebar-link" data-nav="reporting">📄 Reporting</div>
 <div class="sg-nav-link sidebar-link" data-nav="audit">🔍 Audit Trail</div>
+<div class="sg-nav-link sidebar-link" data-nav="admin_view">Admin View</div>
+<div class="sg-nav-link sidebar-link" data-nav="intervention_optimizer">Intervention Optimizer</div>
 <div class="sg-nav-link sidebar-link" data-nav="settings">⚙️ Settings</div>
 <div class="sg-nav-link sidebar-link" data-nav="about">ℹ️ About</div>
 <div class="sg-nav-link sidebar-link" data-nav="services">💼 Services & Pricing</div>
@@ -1810,8 +1812,8 @@ app_ui = ui.page_fillable(
                 ui.nav_panel("data_quality", data_quality_content()),
                 ui.nav_panel("reporting", reporting_content()),
                 ui.nav_panel("audit", audit_content()),
-                ui.nav_panel("Admin View", ui.div(hitl_admin_panel(app_type="gap"), style="padding: 20px;")),
-                ui.nav_panel("Intervention Optimizer", ui.div(intervention_optimizer_panel(hedis_db), style="padding: 20px;")),
+                ui.nav_panel("admin_view", ui.div(hitl_admin_panel(app_type="gap"), style="padding: 20px;")),
+                ui.nav_panel("intervention_optimizer", ui.div(intervention_optimizer_panel(hedis_db), style="padding: 20px;")),
                 ui.nav_panel("settings", settings_content()),
                 ui.nav_panel("about", about_content()),
                 ui.nav_panel("services", services_content()),
