@@ -31,4 +31,4 @@ jobs:
         run: mypy hedis_gap_trail.py cloud_status_badge.py suppression_banner.py hitl_admin_view.py --config-file pyproject.toml
 
       - name: Pytest
-        run: pytest tests/ -v --tb=short
+        run: PYTHONPATH=. pytest tests/ -v --tb=short
