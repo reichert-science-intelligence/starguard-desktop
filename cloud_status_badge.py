@@ -8,7 +8,6 @@
 
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Any
 
 from shiny import ui
 
