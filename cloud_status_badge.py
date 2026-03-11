@@ -8,6 +8,7 @@
 
 import os
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 from shiny import ui
 
@@ -215,7 +216,7 @@ def auditshield_badge(mode: str = "strip") -> ui.div:  # type: ignore[valid-type
     )
 
 
-def starguard_desktop_badge(mode: str = "strip") -> ui.div:
+def starguard_desktop_badge(mode: str = "strip") -> ui.div:  # type: ignore[valid-type]
     """4-badge infrastructure strip: GCP, Sheets, Supabase, Claude API."""
     return _infra_badge_strip(
         strip_items=[
@@ -243,7 +244,7 @@ def starguard_mobile_badge(mode: str = "strip") -> ui.div:  # type: ignore[valid
     )
 
 
-def _infra_badge_strip(strip_items: list, hf_url: str, mode: str = "strip") -> ui.div:
+def _infra_badge_strip(strip_items: list[Any], hf_url: str, mode: str = "strip") -> ui.div:  # type: ignore[valid-type]
     """Render 4-badge infrastructure strip."""
     est_tz = timezone(timedelta(hours=-5))
     now = datetime.now(est_tz).strftime("%I:%M:%S %p EST")
