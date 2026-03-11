@@ -8,6 +8,7 @@
 
 import os
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 from shiny import ui
 
@@ -18,7 +19,7 @@ LINKEDIN_URL = "https://tinyurl.com/24523hmy"
 GITHUB_URL = "https://github.com/reichert-science-intelligence"
 
 
-def cloud_status_css() -> ui.tags.style:
+def cloud_status_css() -> ui.tags.style:  # type: ignore[valid-type]
     """Inject badge CSS — call once inside app_ui head."""
     return ui.tags.style("""
         /* ── Cloud Status Badge (sidebar layout) ── */
@@ -126,7 +127,7 @@ def cloud_status_css() -> ui.tags.style:
     """)
 
 
-def cloud_status_badge(app_variant: str = "starguard", layout: str = "sidebar") -> ui.div:
+def cloud_status_badge(app_variant: str = "starguard", layout: str = "sidebar") -> ui.div:  # type: ignore[valid-type]
     """
     Returns the full badge div for sidebar or strip injection.
     app_variant: 'auditshield' | 'starguard'
@@ -201,7 +202,7 @@ def cloud_status_badge(app_variant: str = "starguard", layout: str = "sidebar") 
     )
 
 
-def auditshield_badge(mode: str = "strip") -> ui.div:
+def auditshield_badge(mode: str = "strip") -> ui.div:  # type: ignore[valid-type]
     """4-badge infrastructure strip: GCP, Sheets, Supabase, Claude API."""
     return _infra_badge_strip(
         strip_items=[
@@ -229,7 +230,7 @@ def starguard_desktop_badge(mode: str = "strip") -> ui.div:
     )
 
 
-def starguard_mobile_badge(mode: str = "strip") -> ui.div:
+def starguard_mobile_badge(mode: str = "strip") -> ui.div:  # type: ignore[valid-type]
     """4-badge infrastructure strip: GCP, Sheets, Supabase, Claude API."""
     return _infra_badge_strip(
         strip_items=[
@@ -265,7 +266,7 @@ def _infra_badge_strip(strip_items: list, hf_url: str, mode: str = "strip") -> u
     )
 
 
-def provenance_footer(app_variant: str = "starguard") -> ui.div:
+def provenance_footer(app_variant: str = "starguard") -> ui.div:  # type: ignore[valid-type]
     """
     Sticky bottom footer — shows on every page.
     Signals production deployment to recruiters.
