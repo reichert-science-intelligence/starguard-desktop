@@ -5,6 +5,7 @@ description = "StarGuard Desktop — Medicare Advantage Intelligence Platform"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "starguard-core>=1.0.0",
     "shiny>=1.2.0",
     "shinywidgets>=0.3.0",
     "htmltools>=0.5.0",
