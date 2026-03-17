@@ -3,6 +3,8 @@
 # HEDIS Gap Refresh UI — StarGuard Desktop + Mobile
 # ─────────────────────────────────────────────────────────────
 
+from datetime import datetime
+
 from shiny import ui
 
 from hedis_gap_trail import HEDIS_MEASURES
@@ -110,7 +112,7 @@ def hedis_gap_panel() -> ui.div:
                 col_widths=[6, 6],
             ),
             ui.layout_columns(
-                ui.input_text("gap_due_date", "Due Date", placeholder="e.g. 2026-12-31"),
+                ui.input_text("gap_due_date", "Due Date", placeholder="MM/DD/YYYY (e.g. 12/31/2026)", value=datetime.now().strftime("%m/%d/%Y")),
                 ui.input_text("gap_provider", "Provider Name", placeholder="e.g. Dr. Martinez"),
                 col_widths=[6, 6],
             ),

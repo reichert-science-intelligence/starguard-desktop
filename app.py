@@ -2038,7 +2038,11 @@ def server(input, output, session):
         try:
             import anthropic
 
-            client = anthropic.Anthropic()
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            if not api_key:
+                ui.update_text_area("gap_claude_rec", value="Error: ANTHROPIC_API_KEY not set. Add to .env or Space secrets.")
+                return
+            client = anthropic.Anthropic(api_key=api_key)
             member_id = input.gap_member_id() or "N/A"
             member_name = input.gap_member_name() or "N/A"
             measure_code = input.gap_measure_code() or "N/A"
