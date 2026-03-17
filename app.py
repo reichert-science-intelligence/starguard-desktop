@@ -19,8 +19,8 @@ from shinywidgets import render_widget
 app_dir = Path(__file__).parent
 static_dir = app_dir / "www"
 
-# Load environment variables
-load_dotenv()
+# Load environment variables (override=False so HF Space secrets aren't clobbered)
+load_dotenv(override=False)
 
 # Verify API key
 if not os.environ.get("ANTHROPIC_API_KEY"):
