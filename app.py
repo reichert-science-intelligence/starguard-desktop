@@ -70,6 +70,7 @@ from cloud_status_badge import (
     provenance_footer,
     starguard_desktop_badge,
 )
+from ui.mobile_badge import mobile_badge
 from hedis_gap_trail import (
     HedisGapDB,
     add_gap_suppression,
@@ -113,10 +114,22 @@ from utils.data_loader import (
     get_merged_member_sdoh,
     load_sentiment_corpus,
 )
+from starguard_platform_integration import register_session, record_finding
 
 # ================================================================
 # UI HELPER FUNCTIONS
 # ================================================================
+
+
+def _gap_severity(gap: dict) -> str:
+    sv = float(gap.get("star_impact", gap.get("star_value", 3.0)))
+    if sv >= 4.5:
+        return "critical"
+    if sv >= 4.0:
+        return "high"
+    if sv >= 3.5:
+        return "medium"
+    return "low"
 
 
 def validation_badge(message="Validated", last_validated=None):
@@ -1873,6 +1886,14 @@ app_ui = ui.page_fillable(
                     tags.div({"class": "sg-star"}, "⭐"),
                     tags.h2("StarGuard AI"),
                     tags.p({"class": "sg-tagline"}, "Medicare Advantage Intelligence Platform"),
+                    tags.div(
+                        mobile_badge(
+                            url="https://rreichert-starguard-desktop.hf.space",
+                            accent_color="#4A3E8F",
+                            id="mobile_badge_starguard",
+                        ),
+                        style="margin-top: 12px;",
+                    ),
                 ),
                 tags.hr(style="border-color: rgba(255,255,255,0.15); margin: 0.75rem 0;"),
                 ui.HTML(SIDEBAR_NAV_HTML),
@@ -1946,6 +1967,12 @@ app_ui = ui.page_fillable(
 # SERVER
 # ═══════════════════════════════════════════════════════════════
 def server(input, output, session):
+
+    try:
+        register_session(app_name="starguard",
+                        session_id=getattr(session, "session_id", None))
+    except Exception:
+        pass
 
     # ─── Navigation handler ───
     @reactive.effect
@@ -2052,7 +2079,22 @@ Write a practical, actionable recommendation for closing this gap. Return only t
             "roi_estimate": input.gap_roi() or 0,
             "claude_recommendation": input.gap_claude_rec() or "",
         }
-        _gap_push_result.set(push_hedis_gap(hedis_db, record))
+        r = push_hedis_gap(hedis_db, record)
+        _gap_push_result.set(r)
+        if r.get("success"):
+            try:
+                record_finding(
+                    source_app="starguard",
+                    finding_type="hedis_gap",
+                    title=f"{record.get('measure_code', 'HEDIS')} gap — {record.get('member_id', 'unknown')}",
+                    description=record.get("claude_recommendation"),
+                    severity=_gap_severity(record),
+                    session_id=getattr(session, "session_id", None),
+                    measure_id=record.get("measure_code"),
+                    payload={"provider": record.get("provider_name"), "star_value": record.get("star_impact")},
+                )
+            except Exception:
+                pass
 
     @render.ui
     def gap_push_result():
