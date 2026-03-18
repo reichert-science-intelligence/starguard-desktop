@@ -72,6 +72,7 @@ from cloud_status_badge import (
     provenance_footer,
     starguard_desktop_badge,
 )
+from loading_overlay import loading_overlay_css, loading_overlay_ui_fillable
 from ui.mobile_badge import mobile_badge
 from hedis_gap_trail import (
     HedisGapDB,
@@ -1714,6 +1715,7 @@ star_cache_db = StarRatingCacheDB()
 # APP UI
 # ═══════════════════════════════════════════════════════════════
 app_ui = ui.page_fillable(
+    loading_overlay_css(),
     ui.head_content(
         cloud_status_css(),
         ui.tags.script("""
@@ -1742,6 +1744,10 @@ app_ui = ui.page_fillable(
         ),
         ui.tags.script(src="https://cdn.plot.ly/plotly-2.35.0.min.js"),
         ui.tags.script(src="nav.js"),
+    ),
+    loading_overlay_ui_fillable(
+        app_name="StarGuard Desktop",
+        tagline="Loading Star Ratings analytics...",
     ),
     # Sidebar visibility - use HTML injection (ui.tags.style may not apply in some Shiny setups)
     ui.HTML("""
