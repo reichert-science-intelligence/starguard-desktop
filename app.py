@@ -27,6 +27,8 @@ if not os.environ.get("ANTHROPIC_API_KEY"):
     print("WARNING: ANTHROPIC_API_KEY not found")
 else:
     print("[OK] API key loaded successfully")
+# Cache at startup — reactive handlers can't re-read HF-injected secrets reliably
+_ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
 # Import utilities
 from utils.formatters import (
@@ -2038,7 +2040,7 @@ def server(input, output, session):
         try:
             import anthropic
 
-            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            api_key = _ANTHROPIC_API_KEY or os.environ.get("ANTHROPIC_API_KEY")
             if not api_key:
                 ui.update_text_area("gap_claude_rec", value="Error: ANTHROPIC_API_KEY not set. Add to .env or Space secrets.")
                 return
@@ -2896,12 +2898,13 @@ Write a practical, actionable recommendation for closing this gap. Return only t
         member = _outreach_selected_member()
         if member is None:
             return "Select a member and click Generate Message."
-        if not os.environ.get("ANTHROPIC_API_KEY"):
+        api_key = _ANTHROPIC_API_KEY or os.environ.get("ANTHROPIC_API_KEY")
+        if not api_key:
             return "ANTHROPIC_API_KEY not set. Add to .env to enable AI message generation."
         try:
             import anthropic
 
-            client = anthropic.Anthropic()
+            client = anthropic.Anthropic(api_key=api_key)
             system_prompt = f"""You are a compassionate healthcare outreach specialist for a Medicare Advantage plan.
 
 Generate a personalized message for this member:
