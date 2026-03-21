@@ -5,7 +5,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends curl gcc g++ \
     && rm -rf /var/lib/apt/lists/* \
     && curl -L -o /usr/local/bin/opa \
-        https://openpolicyagent.org/downloads/latest/opa_linux_amd64_static \
+        https://github.com/open-policy-agent/opa/releases/download/v0.70.0/opa_linux_amd64_static \
     && chmod +x /usr/local/bin/opa
 
 COPY requirements.txt .
