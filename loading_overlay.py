@@ -50,7 +50,6 @@ def loading_overlay_ui(app_name: str, tagline: str) -> ui.Tag:
             ),
             class_="overlay-inner",
         ),
-        id="loading-overlay",
         ui.HTML("""
 <script>
 (function() {
@@ -79,6 +78,7 @@ def loading_overlay_ui(app_name: str, tagline: str) -> ui.Tag:
 })();
 </script>
 """),
+        id="loading-overlay",
     )
 
 
@@ -97,7 +97,6 @@ def loading_overlay_ui_fillable(app_name: str, tagline: str) -> ui.Tag:
             ),
             class_="overlay-inner",
         ),
-        id="loading-overlay",
         ui.HTML("""
 <script>
 (function() {
@@ -127,4 +126,5 @@ def loading_overlay_ui_fillable(app_name: str, tagline: str) -> ui.Tag:
 })();
 </script>
 """),
+        id="loading-overlay",
     )
