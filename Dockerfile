@@ -9,7 +9,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl gcc g++ \
     && chmod +x /usr/local/bin/opa
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir \
+    gotrue==1.3.0 \
+    httpcore==0.16.3 \
+    httpx==0.23.3 \
+    anyio==3.7.1 \
+    python-dotenv==1.0.0 \
+    supabase==2.3.0 \
+    && pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 

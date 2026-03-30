@@ -21,7 +21,7 @@ dependencies = [
     "qrcode[pillow]>=7.0.0",
     "gspread>=6.0.0",
     "google-auth>=2.28.0",
-    "supabase>=2.10.0",
+    "supabase==2.3.0",
 ]
 
 [project.optional-dependencies]
