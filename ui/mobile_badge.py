@@ -26,6 +26,16 @@ def mobile_badge(
         ui.tags.style("""
             .mobile-badge-url { font-size: 11px; color: #666; word-break: break-all; margin: 8px 0 4px; }
             .mobile-badge-tip { font-size: 10px; color: #999; margin: 0; }
+            /* Allow popover to escape bslib sidebar overflow clip */
+            .bslib-sidebar-layout .sidebar,
+            .bslib-sidebar-layout .sidebar > *,
+            .bslib-sidebar-layout aside,
+            .bslib-sidebar-layout aside > * {
+              overflow: visible !important;
+            }
+            /* Popover wrap: own stacking context so popover sits above siblings */
+            .mobile-badge-popover-wrap { position: relative; z-index: 9999; }
+            .mobile-badge-popover { max-width: 260px; }
         """),
         ui.tags.script(src=QRCODE_CDN),
         ui.tags.a(
@@ -67,7 +77,7 @@ function ensurePopover() {{
   pop.id = popoverId;
   pop.className = 'mobile-badge-popover';
   pop.innerHTML = '<button type="button" class="mobile-badge-close" aria-label="Close">✕</button><div id="' + popoverId + '_qr"></div><p class="mobile-badge-url">' + url + '</p><p class="mobile-badge-tip">Point your phone camera at the QR code</p>';
-  pop.style.cssText = 'position:absolute; left:0; top:100%; margin-top:8px; z-index:9999; background:#fff; border-radius:12px; padding:16px; box-shadow:0 8px 24px rgba(0,0,0,0.2); display:none; min-width:220px;';
+  pop.style.cssText = 'position:absolute; left:0; top:100%; margin-top:8px; z-index:9999; background:#fff; border-radius:12px; padding:16px; box-shadow:0 8px 24px rgba(0,0,0,0.2); display:none; min-width:240px; max-width:260px;';
   wrap.appendChild(pop);
   var closeBtn = pop.querySelector('.mobile-badge-close');
   closeBtn.style.cssText = 'position:absolute; top:8px; right:8px; border:none; background:transparent; font-size:18px; cursor:pointer; color:#666; padding:0; line-height:1;';
